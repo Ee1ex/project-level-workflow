@@ -1,0 +1,139 @@
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import tempfile
+import unittest
+
+from scripts import workflow
+
+
+def ready_state() -> dict:
+    return {
+        "risk": "R2",
+        "permissions": {
+            "allow_push_own_branch": False,
+            "allow_create_draft_pr": False,
+        },
+        "current_task": {"title": "实现策略", "paths": ["src/policy.py"]},
+        "verifications": [{"command": "python -m unittest", "status": "passed"}],
+        "git": {"skill_created_branch": True},
+    }
+
+
+def ready_git() -> dict:
+    return {
+        "available": True,
+        "repository": True,
+        "branch": "workflow/policy",
+        "default_branch": "main",
+        "changed_files": ["src/policy.py"],
+        "changes_in_scope": True,
+        "unrelated_changes": [],
+        "remote_name": "origin",
+        "remote_url": "https://github.com/example/project.git",
+        "authenticated": True,
+        "ahead_commits": 1,
+    }
+
+
+class GitPolicyTests(unittest.TestCase):
+    def test_git_init_always_requires_an_explicit_gate(self) -> None:
+        decision = workflow.evaluate_git_action(
+            "git_init", ready_state(), {"available": True, "repository": False}
+        )
+        self.assertFalse(decision["allowed"])
+        self.assertTrue(decision["requires_gate"])
+        self.assertIn("Gate", " ".join(decision["reasons"]))
+
+    def test_force_push_and_history_rewrite_are_always_forbidden(self) -> None:
+        for action in (
+            "force_push",
+            "rewrite_history",
+            "delete_remote_branch",
+            "ready_pr",
+            "merge",
+            "release",
+        ):
+            with self.subTest(action=action):
+                decision = workflow.evaluate_git_action(action, ready_state(), ready_git())
+                self.assertFalse(decision["allowed"])
+                self.assertFalse(decision["requires_gate"])
+                self.assertIn("禁止", " ".join(decision["reasons"]))
+
+    def test_local_commit_requires_owned_branch_scope_and_verification(self) -> None:
+        decision = workflow.evaluate_git_action("local_commit", ready_state(), ready_git())
+        self.assertTrue(decision["allowed"])
+        self.assertFalse(decision["requires_gate"])
+
+        git_info = ready_git()
+        git_info["unrelated_changes"] = ["notes/private.md"]
+        denied = workflow.evaluate_git_action("local_commit", ready_state(), git_info)
+        self.assertFalse(denied["allowed"])
+        self.assertIn("无关修改", " ".join(denied["reasons"]))
+
+    def test_remote_writes_default_to_denied(self) -> None:
+        state = ready_state()
+        push = workflow.evaluate_git_action("push_own_branch", state, ready_git())
+        draft = workflow.evaluate_git_action("create_draft_pr", state, ready_git())
+        self.assertFalse(push["allowed"])
+        self.assertFalse(draft["allowed"])
+        self.assertIn("allow_push_own_branch", " ".join(push["reasons"]))
+        self.assertIn("allow_create_draft_pr", " ".join(draft["reasons"]))
+
+    def test_authorized_own_branch_push_and_draft_pr_can_proceed(self) -> None:
+        state = ready_state()
+        state["permissions"]["allow_push_own_branch"] = True
+        state["permissions"]["allow_create_draft_pr"] = True
+        self.assertTrue(
+            workflow.evaluate_git_action("push_own_branch", state, ready_git())["allowed"]
+        )
+        self.assertTrue(
+            workflow.evaluate_git_action("create_draft_pr", state, ready_git())["allowed"]
+        )
+
+    def test_main_branch_remote_write_is_denied(self) -> None:
+        state = ready_state()
+        state["permissions"]["allow_push_own_branch"] = True
+        git_info = ready_git()
+        git_info["branch"] = "main"
+        decision = workflow.evaluate_git_action("push_own_branch", state, git_info)
+        self.assertFalse(decision["allowed"])
+        self.assertIn("默认分支", " ".join(decision["reasons"]))
+
+    @unittest.skipUnless(shutil.which("git"), "当前测试环境未发现 Git")
+    def test_inspect_git_reads_branch_changes_and_remote(self) -> None:
+        git = shutil.which("git")
+        assert git
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            subprocess.run([git, "init"], cwd=project, check=True, capture_output=True)
+            subprocess.run(
+                [git, "config", "user.email", "workflow@example.invalid"],
+                cwd=project,
+                check=True,
+            )
+            subprocess.run(
+                [git, "config", "user.name", "Workflow Test"], cwd=project, check=True
+            )
+            (project / "tracked.txt").write_text("base\n", encoding="utf-8")
+            subprocess.run([git, "add", "tracked.txt"], cwd=project, check=True)
+            subprocess.run([git, "commit", "-m", "base"], cwd=project, check=True, capture_output=True)
+            subprocess.run([git, "checkout", "-b", "workflow/test"], cwd=project, check=True, capture_output=True)
+            subprocess.run(
+                [git, "remote", "add", "origin", "https://github.com/example/project.git"],
+                cwd=project,
+                check=True,
+            )
+            (project / "tracked.txt").write_text("changed\n", encoding="utf-8")
+
+            info = workflow.inspect_git(project)
+            self.assertTrue(info["repository"])
+            self.assertEqual(info["branch"], "workflow/test")
+            self.assertIn("tracked.txt", info["changed_files"])
+            self.assertEqual(info["remote_name"], "origin")
+
+
+if __name__ == "__main__":
+    unittest.main()

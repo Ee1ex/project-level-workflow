@@ -1,0 +1,11 @@
+<!-- project-level-workflow:start -->
+## Project Level Workflow 托管入口
+
+- 当前流程：LEVEL {{LEVEL}}
+- 权威 SOP：`{{SOP}}`
+- 机器状态：`.project-workflow/state.json`
+- 人类摘要：`docs/project-workflow/STATUS.md`
+- 状态校验：`python scripts/workflow.py validate --project .`
+
+恢复会话时先校验状态。按权威 SOP 推进当前最小任务，保留用户已有修改；到人工 Gate 后报告事实、证据、风险、方案和推荐决策，未经批准不继续。
+<!-- project-level-workflow:end -->

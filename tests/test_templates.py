@@ -1,0 +1,51 @@
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+TEMPLATES = [
+    "templates/common/status.md",
+    "templates/common/gate-report.md",
+    "templates/common/acceptance-report.md",
+    "templates/level1/project-brief.md",
+    "templates/level2/project-map.md",
+    "templates/level2/change-proposal.md",
+    "templates/level3/idea-review.md",
+    "templates/level3/prd.md",
+    "templates/level3/tech-spec.md",
+    "templates/level3/task.md",
+    "templates/level3/deploy-readiness.md",
+    "templates/level3/rollback-plan.md",
+]
+
+
+class TemplateTests(unittest.TestCase):
+    def test_templates_exist_and_are_complete(self):
+        forbidden = ("TO" + "DO", "T" + "BD")
+        for relative in TEMPLATES:
+            path = ROOT / relative
+            self.assertTrue(path.is_file(), relative)
+            text = path.read_text(encoding="utf-8")
+            self.assertTrue(text.startswith("# "), relative)
+            for marker in forbidden:
+                self.assertNotIn(marker, text, relative)
+            for shared in ["状态", "负责人", "关联 Gate", "最后更新时间"]:
+                self.assertIn(shared, text, f"{relative}: {shared}")
+
+    def test_required_sections(self):
+        required_sections = {
+            "templates/level1/project-brief.md": ["目标用户", "核心路径", "本次不做", "验收标准"],
+            "templates/level2/change-proposal.md": ["当前行为", "期望行为", "影响范围", "回归范围"],
+            "templates/level3/prd.md": ["目标用户", "MVP", "不做清单", "验收标准", "成功指标"],
+            "templates/common/gate-report.md": ["已确认事实", "验证证据", "风险", "推荐决策", "等待批准"],
+        }
+        for relative, sections in required_sections.items():
+            text = (ROOT / relative).read_text(encoding="utf-8")
+            for section in sections:
+                self.assertIn(section, text, f"{relative}: {section}")
+
+
+if __name__ == "__main__":
+    unittest.main()

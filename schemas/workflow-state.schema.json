@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/project-level-workflow/workflow-state.schema.json",
+  "title": "Project Level Workflow State",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "workflow_version",
+    "project_id",
+    "level",
+    "stage",
+    "gate",
+    "status",
+    "risk",
+    "permissions",
+    "current_task",
+    "artifacts",
+    "verifications",
+    "git",
+    "remote",
+    "history",
+    "updated_at"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "workflow_version": {"const": "0.1.0"},
+    "project_id": {"type": "string", "minLength": 1},
+    "level": {"enum": [1, 2, 3]},
+    "stage": {"type": "string", "minLength": 1},
+    "gate": {"type": ["string", "null"]},
+    "status": {"enum": ["in_progress", "waiting_approval", "completed", "blocked"]},
+    "risk": {"enum": ["R1", "R2", "R3", "R4"]},
+    "permissions": {
+      "type": "object",
+      "required": ["allow_push_own_branch", "allow_create_draft_pr"],
+      "properties": {
+        "allow_push_own_branch": {"type": "boolean", "default": false},
+        "allow_create_draft_pr": {"type": "boolean", "default": false}
+      },
+      "additionalProperties": false
+    },
+    "current_task": {"type": ["object", "null"]},
+    "artifacts": {"type": "array"},
+    "verifications": {"type": "array"},
+    "git": {"type": "object"},
+    "remote": {"type": "object"},
+    "history": {"type": "array"},
+    "updated_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,78 @@
+{
+  "version": "0.1.0",
+  "language": "zh-CN",
+  "cases": [
+    {
+      "id": "level1-static-tool",
+      "prompt": "帮我做一个不需要数据库的静态网页小工具，先判断 LEVEL 并推进到下一个人工 Gate。",
+      "expected_output": {"trigger": true, "level": 1, "requires_level_confirmation": true},
+      "files": ["SKILL.md", "LEVEL1-小型项目开发流程.md", "templates/level1/project-brief.md"]
+    },
+    {
+      "id": "level1-game-mod",
+      "prompt": "我想给单机游戏做一个只改界面的 Mod，边做边改，最终再统一测试和宣传。",
+      "expected_output": {"trigger": true, "level": 1, "requires_level_confirmation": true},
+      "files": ["SKILL.md", "LEVEL1-小型项目开发流程.md"]
+    },
+    {
+      "id": "level2-existing-bug",
+      "prompt": "帮我修复这个已有 GitHub 项目的一个 Bug，先理解仓库再推进。",
+      "expected_output": {"trigger": true, "level": 2, "requires_level_confirmation": true},
+      "files": ["SKILL.md", "LEVEL2-已有与开源项目改进流程.md", "templates/level2/change-proposal.md"]
+    },
+    {
+      "id": "level2-open-source-feature",
+      "prompt": "我要给一个开源项目增加小功能并准备贡献 PR，请按标准流程执行。",
+      "expected_output": {"trigger": true, "level": 2, "requires_level_confirmation": true},
+      "files": ["LEVEL2-已有与开源项目改进流程.md", "references/git-and-draft-pr.md"]
+    },
+    {
+      "id": "level3-saas",
+      "prompt": "我要开发一个长期运营的 SaaS，请按严格流程从调研开始。",
+      "expected_output": {"trigger": true, "level": 3, "requires_level_confirmation": true},
+      "files": ["SKILL.md", "LEVEL3-持续运营产品开发流程.md", "templates/level3/prd.md"]
+    },
+    {
+      "id": "level3-app",
+      "prompt": "做一款需要账号、付费、监控和持续迭代的手机 App，并推进到第一个人工 Gate。",
+      "expected_output": {"trigger": true, "level": 3, "requires_level_confirmation": true},
+      "files": ["LEVEL3-持续运营产品开发流程.md", "templates/level3/tech-spec.md"]
+    },
+    {
+      "id": "exclude-skill-creation",
+      "prompt": "把我的提示词制作成一个新的 Agent Skill。",
+      "expected_output": {"trigger": false, "exclusion": "skill_creation"},
+      "files": ["SKILL.md"]
+    },
+    {
+      "id": "exclude-pure-explanation",
+      "prompt": "只解释一下 LEVEL 2 和 LEVEL 3 的区别，不要创建或修改任何文件。",
+      "expected_output": {"trigger": false, "exclusion": "pure_explanation"},
+      "files": ["SKILL.md", "references/level-selection.md"]
+    },
+    {
+      "id": "exclude-read-only-review",
+      "prompt": "只读 Review 这份代码并告诉我问题，不要修复。",
+      "expected_output": {"trigger": false, "exclusion": "read_only_review"},
+      "files": ["SKILL.md"]
+    },
+    {
+      "id": "ambiguous-level-gate",
+      "prompt": "我有一个产品想法但还不确定规模，请你判断流程级别。",
+      "expected_output": {"trigger": true, "level": 1, "recommendation_is_provisional": true, "requires_level_confirmation": true},
+      "files": ["SKILL.md", "references/level-selection.md"]
+    },
+    {
+      "id": "qima-reminder-only",
+      "prompt": "按 LEVEL 3 做前期澄清，合适时提醒我是否手动使用 Qima。",
+      "expected_output": {"trigger": true, "level": 3, "qima": "reminder_only", "direct_invocation": false},
+      "files": ["SKILL.md", "references/tool-routing.md"]
+    },
+    {
+      "id": "git-init-gate",
+      "prompt": "这个目录还不是 Git 仓库，按 LEVEL 2 推进并自动提交。",
+      "expected_output": {"trigger": true, "level": 2, "git_init": "requires_gate", "remote_write": false},
+      "files": ["references/git-and-draft-pr.md", "references/risk-and-permissions.md"]
+    }
+  ]
+}
