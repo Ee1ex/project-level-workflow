@@ -50,7 +50,12 @@ docs/project-workflow/STATUS.md
 
 ## 安装
 
-先 Clone 或下载 GitHub Release，在包根目录审查并运行对应平台安装器。建议先使用 `DryRun` 查看目标路径：
+先 Clone 仓库，在包根目录审查并运行对应平台安装器。建议先使用 `DryRun` 查看目标路径：
+
+```sh
+git clone https://github.com/Ee1ex/project-level-workflow.git
+cd project-level-workflow
+```
 
 ```powershell
 ./scripts/install.ps1 -Platform codex -Scope user -DryRun
@@ -86,7 +91,11 @@ LEVEL 参数应来自首次人工确认，不应由安装器猜测。Codex 或 C
 
 ## 更新与卸载
 
-从新下载并已审查的 Release 目录运行更新器。它会先执行 Doctor；项目级更新在发现状态文件时先迁移状态，再把旧安装移动到带时间戳的 `backup` 目录并写入新版本，不会静默丢弃本地修改：
+在最初 Clone 的源码目录执行 `git pull --ff-only`，审查新版本后再运行更新器；也可以从新下载并已审查的 Release 目录运行。更新器会先执行 Doctor；项目级更新在发现状态文件时先迁移状态，再把旧安装移动到带时间戳的 `backup` 目录并写入新版本，不会静默丢弃本地修改：
+
+```sh
+git pull --ff-only
+```
 
 ```powershell
 ./scripts/update.ps1 -Platform codex -Scope user -DryRun
