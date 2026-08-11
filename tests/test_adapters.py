@@ -37,7 +37,7 @@ class AdapterTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 0, result.stderr)
             text = target.read_text(encoding="utf-8")
             self.assertIn("保留此内容", text)
-            self.assertIn("LEVEL2-已有与开源项目改进流程.md", text)
+            self.assertIn("LEVEL2-可持续运营项目开发流程.md", text)
             self.assertEqual(text.count(START), 1)
             self.assertEqual(text.count(END), 1)
 
@@ -47,7 +47,7 @@ class AdapterTests(unittest.TestCase):
             result = run_cli("render-adapter", "--platform", "claude-code", "--project", temp)
             self.assertEqual(result.returncode, 0, result.stderr)
             text = (project / "CLAUDE.md").read_text(encoding="utf-8")
-            self.assertIn("LEVEL1-小型项目开发流程.md", text)
+            self.assertIn("LEVEL1-快速验证与轻量交付流程.md", text)
             self.assertIn(".project-workflow/state.json", text)
             self.assertEqual(text.count(START), 1)
 
@@ -61,7 +61,16 @@ class AdapterTests(unittest.TestCase):
             self.assertTrue(text.startswith("---\n"))
             self.assertIn("alwaysApply: false", text)
             self.assertIn("description:", text)
-            self.assertIn("LEVEL3-持续运营产品开发流程.md", text)
+            self.assertIn("LEVEL3-已有与开源项目改进流程.md", text)
+
+    def test_level_four_adapter_explains_analysis_only_boundary(self):
+        with tempfile.TemporaryDirectory() as temp:
+            project = self._initialized_project(temp, "4")
+            result = run_cli("render-adapter", "--platform", "codex", "--project", temp)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            text = (project / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertIn("LEVEL4-复杂项目需求分析流程.md", text)
+            self.assertIn("只做需求分析", text)
 
     def test_unknown_platform_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp:

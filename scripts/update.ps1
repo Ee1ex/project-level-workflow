@@ -46,7 +46,9 @@ if ($Scope -eq 'project') {
     }
 }
 
-# 更新复用安装器的原生 PowerShell 路径逻辑；VERSION、conflict 与 backup 策略保持一致。
+# 更新复用安装器的原生 PowerShell 路径逻辑；安装器会同步四份活动 SOP
+# （LEVEL1-快速验证与轻量交付、LEVEL2-可持续运营、LEVEL3-已有/开源改进、LEVEL4-需求分析）
+# 和三个旧文件名兼容入口；VERSION、conflict 与 backup 策略保持一致。
 $target = [System.IO.Path]::GetFullPath($ProjectPath)
 Write-Verbose "更新基准路径：$target"
 & $installer -Platform $Platform -Scope $Scope -ProjectPath $ProjectPath -DryRun:$DryRun -Mode update

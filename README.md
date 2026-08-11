@@ -1,71 +1,73 @@
 # Project Level Workflow
 
-一套面向 AI Agent 的三级项目开发流程。它会根据项目规模、风险和生命周期推荐 LEVEL 1、LEVEL 2 或 LEVEL 3，在用户确认后自动推进低风险工作，并在人工 Gate 停止。
+一套面向 AI Agent 的四级项目开发流程。LEVEL 表示项目责任模式，R1–R4 表示当前动作风险；两者分开判断，在人工 Gate 前保留事实、证据和用户决定。
 
-## 三个 LEVEL
+## 四个 LEVEL
 
-- LEVEL 1：小工具、静态网页、插件、Skill、游戏 Mod 等轻量项目。
-- LEVEL 2：已有项目改进、团队项目局部变更和 GitHub 开源贡献。
-- LEVEL 3：App、SaaS、小程序、客户端等需要持续运营维护的产品。
+| LEVEL | 责任模式 | 适用项目 | 核心流程 |
+| --- | --- | --- | --- |
+| 1 | 快速验证与轻量交付 | 离线工具、脚本、Skill、插件、游戏 Mod、原型、静态页面、无用户系统的 Web 工具、版本化下载物 | PVS-Lite；快速实现，完成或打包前集中冒烟、构建/打包和人工验收 |
+| 2 | 自有项目的可持续运营 | 自己负责、要上线并持续运营的 Web/App/小程序/在线服务；有账户、权限、云端数据、服务端逻辑、公开 API、定时任务或长期支持责任 | 完整 `project-vibe-spec`；维护需求、设计、数据、决策、进度、验证、发布、回滚和运营文档 |
+| 3 | 已有与开源项目改进 | 参与他人、团队、公司或开源仓库，提交 Bug 修复、体验优化或功能 PR | 保留项目地图、权限与贡献规则、修改前基线、复现、受影响回归、CI、Review、PR 和交接 |
+| 4 | 复杂项目需求分析 | 大型产品、多系统编排、复杂自动化、多人协作或完整运营自动化 | 当前只做机会/需求分析、范围、MVP、方案、风险、验收和待确认事项，不开发 |
 
-三份根目录 LEVEL Markdown 是唯一权威 SOP，也可以分别导入语雀。
+“持续更新”和“持续运营”不是同一个判断。重新打包、上传新版本供用户下载，或更新一份静态页面，只要没有线上用户状态、云端业务数据、持续在线服务和运行责任，仍然默认 LEVEL 1。持续运营指需要长期承担服务可用性、用户/权限、数据、发布、备份、回滚、监控、反馈或支持责任，通常进入 LEVEL 2。
+
+四份活动 SOP 是唯一权威流程源：
+
+- `LEVEL1-快速验证与轻量交付流程.md`
+- `LEVEL2-可持续运营项目开发流程.md`
+- `LEVEL3-已有与开源项目改进流程.md`
+- `LEVEL4-复杂项目需求分析流程.md`
+
+旧文件名仍保留为兼容入口，并明确指向新的活动 SOP；不会静默改变旧文档的含义。
+
+## 选择顺序
+
+1. 参与他人、团队、公司或开源仓库？推荐 LEVEL 3。
+2. 自己负责且需要线上运行和持续运营？推荐 LEVEL 2。
+3. 只是离线、静态或可下载交付物，更新时重新打包/上传即可？推荐 LEVEL 1。
+4. 大型、多系统或复杂自动化项目？推荐 LEVEL 4；第一版只做需求分析。
+5. 再单独叠加当前动作的 R1–R4 风险和人工 Gate。
+
+“以后可能更新”不能单独触发升级。无法区分时，列出事实、假设和替代 LEVEL，等待项目负责人确认。
+
+## `project-vibe-spec` 分层
+
+LEVEL 1 使用 PVS-Lite：至少保留项目规则、`AGENTS.md`、`DOCUMENT_MAP.md`、Project Brief、`STATUS.md`、`state.json`/备份和必要的待验证事项；需求跨模块、持久化或高风险时再增加 REQ、决策或技术文档。
+
+LEVEL 2 使用完整 PVS：复用已有文档目录，维护 PDD/PRD、Requirements/REQ、决策、业务流、UI/技术/API/数据/部署/运营文档及进度和验证证据。完整 PVS 不要求每次小改动都跑重型测试，测试按风险、功能集成、里程碑和版本完成阶段集中安排。
+
+LEVEL 4 只建立分析材料和待确认记录；不写代码、不改数据库、不部署、不接入生产、不自动拆开发任务。
+
+## 状态与兼容迁移
+
+状态保存在 `.project-workflow/state.json` 和 `docs/project-workflow/STATUS.md`，更新前写入 `state.backup.json`。旧状态数字语义迁移为：
+
+```text
+旧 LEVEL 1 → 新 LEVEL 1
+旧 LEVEL 2 → 新 LEVEL 3
+旧 LEVEL 3 → 新 LEVEL 4
+```
+
+迁移会在状态和 `STATUS.md` 记录旧/新等级、Schema 版本和原因，并将迁移后的 Gate 置为待人工确认，不会静默批准。旧 LEVEL 3 若要改成新 LEVEL 2，必须使用显式重确认并留下批准人、原因和历史记录。
 
 ## 支持平台
 
 - Codex：以 Agent Skill 方式安装。
 - Claude Code：以项目或个人 Skill 方式安装。
-- Cursor：生成项目级 `.cursor/rules/*.mdc` 与精简 `AGENTS.md` 入口。
+- Cursor：生成项目级 `.cursor/rules/*.mdc` 与精简入口。
 
-## 工作方式
+适配器只引用当前活动 SOP、状态和分层策略，不复制完整流程。
 
-1. 读取项目目标、现有规则和历史状态。
-2. 推荐 LEVEL，并等待用户确认。
-3. 创建当前 LEVEL 所需的最小文档。
-4. 自动执行已批准范围内的 R1/R2 工作。
-5. 运行测试、Lint、类型检查或构建并记录证据。
-6. 更新状态、本地提交，以及经授权的自有分支和 Draft PR。
-7. 到达 R3/R4 或阶段 Gate 时停止，提交事实、证据、风险与推荐决策。
+## 安装、更新与卸载
 
-## 安全默认值
-
-公开安装默认关闭自动远程写入：
-
-```text
-allow_push_own_branch=false
-allow_create_draft_pr=false
-```
-
-Skill 禁止 Force Push、改写公共历史、提交用户无关修改、自动生产发布和自动公开宣传。Qima 仅在适用阶段提醒用户手动考虑，不由本 Skill 直接调用。
-
-## 状态恢复
-
-项目执行状态保存在：
-
-```text
-.project-workflow/state.json
-docs/project-workflow/STATUS.md
-```
-
-前者供 Agent 恢复状态，后者供人直接查看。状态文件不得包含密钥、Token、用户数据或长日志。
-
-## 安装
-
-先 Clone 仓库，在包根目录审查并运行对应平台安装器。建议先使用 `DryRun` 查看目标路径：
-
-```sh
-git clone https://github.com/Ee1ex/project-level-workflow.git
-cd project-level-workflow
-```
+先 Clone 仓库，在包根目录审查并运行对应安装器。建议先使用 Dry Run：
 
 ```powershell
 ./scripts/install.ps1 -Platform codex -Scope user -DryRun
 ./scripts/install.ps1 -Platform codex -Scope user
-```
-
-如果 Windows 的本地执行策略阻止 `.ps1`，可在审查脚本后仅为本次进程显式运行：
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install.ps1 -Platform codex -Scope user -DryRun
+./scripts/install.ps1 -Platform cursor -Scope project -ProjectPath 'D:\path\to\project' -DryRun
 ```
 
 ```sh
@@ -73,45 +75,31 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install.ps1 -P
 ./scripts/install.sh --platform claude-code --scope user
 ```
 
-项目级安装必须显式指定项目目录：
-
-```powershell
-./scripts/install.ps1 -Platform cursor -Scope project -ProjectPath 'D:\path\to\project' -DryRun
-./scripts/install.ps1 -Platform cursor -Scope project -ProjectPath 'D:\path\to\project'
-```
-
-Cursor 项目级安装后，在目标项目根目录从已安装 Skill 路径初始化状态并生成项目 Rule：
+项目级安装后，在目标项目根目录初始化已确认的等级：
 
 ```sh
 python .cursor/skills/project-level-workflow/scripts/workflow.py init --project . --level 1
 python .cursor/skills/project-level-workflow/scripts/workflow.py render-adapter --project . --platform cursor
 ```
 
-LEVEL 参数应来自首次人工确认，不应由安装器猜测。Codex 或 Claude Code 也可以从各自安装目录调用同一 `workflow.py`。
+更新器会先运行 Doctor；项目级状态存在时先执行迁移，再把旧安装移动到带时间戳的 `backup` 目录。卸载只删除托管 Skill 目录，默认保留项目中的 `.project-workflow/` 与 `docs/project-workflow/`。
 
-## 更新与卸载
+## 工作方式与安全默认值
 
-在最初 Clone 的源码目录执行 `git pull --ff-only`，审查新版本后再运行更新器；也可以从新下载并已审查的 Release 目录运行。更新器会先执行 Doctor；项目级更新在发现状态文件时先迁移状态，再把旧安装移动到带时间戳的 `backup` 目录并写入新版本，不会静默丢弃本地修改：
+1. 读取项目规则、文档地图和相关状态。
+2. 按选择协议推荐并等待 LEVEL 确认。
+3. 只创建当前等级需要的最小文档。
+4. 在批准范围内推进 R1/R2；R3/R4、生产、数据、密钥和公开发布停在人工 Gate。
+5. 记录实际验证；未运行的检查只能写成待验证。
 
-```sh
-git pull --ff-only
+公开远程写入默认关闭：
+
+```text
+allow_push_own_branch=false
+allow_create_draft_pr=false
 ```
 
-```powershell
-./scripts/update.ps1 -Platform codex -Scope user -DryRun
-./scripts/update.ps1 -Platform codex -Scope user
-./scripts/uninstall.ps1 -Platform codex -Scope user -DryRun
-./scripts/uninstall.ps1 -Platform codex -Scope user
-```
-
-```sh
-./scripts/update.sh --platform claude-code --scope user --dry-run
-./scripts/update.sh --platform claude-code --scope user
-./scripts/uninstall.sh --platform claude-code --scope user --dry-run
-./scripts/uninstall.sh --platform claude-code --scope user
-```
-
-卸载只删除 Skill 安装目录，默认保留项目中的 `.project-workflow/` 与 `docs/project-workflow/`。
+禁止 Force Push、改写公共历史、提交用户无关修改、自动生产发布和自动公开宣传。外部 Plugin/服务不随本包安装，使用前仍需检查登录、授权、数据范围和费用。
 
 ## 开发验证
 
@@ -120,15 +108,17 @@ git pull --ff-only
 ```sh
 python -m unittest discover -s tests -v
 python scripts/workflow.py doctor --package-root .
+python scripts/workflow.py validate-package --package-root .
 ```
 
-## 版本与更新
+四个等级都支持：
 
-项目使用语义化版本、Git Tag、GitHub Release 和 `CHANGELOG.md`。升级前会备份本地配置与状态；发现用户修改时停止，不静默覆盖。
-
-## 卸载原则
-
-卸载器只删除安装清单中由本项目创建的托管文件，默认保留项目内 `.project-workflow/` 和 `docs/project-workflow/`。删除项目状态需要单独确认。
+```sh
+python scripts/workflow.py init --project <temporary-project> --level 1
+python scripts/workflow.py init --project <temporary-project> --level 2
+python scripts/workflow.py init --project <temporary-project> --level 3
+python scripts/workflow.py init --project <temporary-project> --level 4
+```
 
 ## 许可证
 

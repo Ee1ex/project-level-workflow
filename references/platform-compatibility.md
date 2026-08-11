@@ -2,23 +2,23 @@
 
 ## 何时读取
 
-安装 Skill、生成项目规则、切换 Agent 或诊断触发问题时读取。
+安装 Skill、生成项目规则、切换 Agent、渲染适配器、执行状态迁移或诊断平台触发问题时读取。
 
 ## 共享核心
 
-三个平台共同读取根目录 `SKILL.md`、三份 LEVEL SOP、`references/`、`templates/` 和项目状态。平台适配器不得复制或改写业务流程。
+三个平台共同读取根目录 `SKILL.md`、四份活动 LEVEL SOP、`references/`、`templates/` 和项目状态。旧 SOP 文件仅为兼容入口。平台适配器不得复制或改写业务流程，只显示当前 LEVEL、活动 SOP、PVS/分析边界和状态路径。
 
 ## Codex
 
 - 个人 Skill 安装到 Codex Skills 目录，项目也可保留仓库内共享副本。
 - 项目规则使用根目录 `AGENTS.md`。
-- 外部 Plugin 与工具以当前会话实际可用能力为准。
+- 适配器渲染 `AGENTS.md` 的托管区块，保留用户区块。
 
 ## Claude Code
 
 - 使用个人或项目 `.claude/skills/<skill-name>/SKILL.md`。
 - 项目持久规则使用 `CLAUDE.md`，只放项目事实、命令和边界。
-- Claude 专属 frontmatter、权限和 Hooks 只写在适配层，不能成为共享核心依赖。
+- 适配器渲染 `CLAUDE.md` 的托管区块，保留用户区块。
 
 ## Cursor
 
@@ -26,6 +26,17 @@
 - 可同时使用简洁 `AGENTS.md` 作为通用项目入口。
 - 不生成旧式 `.cursorrules`。
 - 规则引用共享 SOP、状态和当前任务，不复制完整流程。
+
+## 四级适配策略
+
+- LEVEL 1 显示 PVS-Lite 和集中冒烟/打包验证边界。
+- LEVEL 2 显示完整 PVS、持续运营和风险/里程碑验证边界。
+- LEVEL 3 显示已有仓库基线、回归、Review、PR 和交接责任。
+- LEVEL 4 显示只做需求分析，不写代码、不改数据库、不部署、不自动拆任务。
+
+## 状态迁移
+
+适配器读取迁移后的状态，不自行推断旧数字含义。旧 LEVEL 1/2/3 迁移为新 LEVEL 1/3/4；迁移后以 `level-migration-review` 作为待人工确认 Gate。旧 LEVEL 3 改新 LEVEL 2 必须由迁移命令提供用户重确认记录。
 
 ## 降级
 
