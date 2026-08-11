@@ -29,7 +29,7 @@ class EvalContractTests(unittest.TestCase):
             for case in data["cases"]
             if case["expected_output"].get("trigger") is True
         }
-        self.assertTrue({1, 2, 3}.issubset(levels))
+        self.assertTrue({1, 2, 3, 4}.issubset(levels))
 
     def test_negative_cases_cover_skill_creation_explanation_and_review(self) -> None:
         data = json.loads((ROOT / "evals" / "evals.json").read_text(encoding="utf-8"))

@@ -10,14 +10,24 @@ TEMPLATES = [
     "templates/common/gate-report.md",
     "templates/common/acceptance-report.md",
     "templates/level1/project-brief.md",
+    "templates/level1/pending-verification.md",
     "templates/level2/project-map.md",
     "templates/level2/change-proposal.md",
+    "templates/level2/requirements.md",
+    "templates/level2/decision-record.md",
+    "templates/level2/operations-readiness.md",
+    "templates/level2/pending-verification.md",
     "templates/level3/idea-review.md",
     "templates/level3/prd.md",
     "templates/level3/tech-spec.md",
     "templates/level3/task.md",
     "templates/level3/deploy-readiness.md",
     "templates/level3/rollback-plan.md",
+    "templates/level3/project-map.md",
+    "templates/level3/change-proposal.md",
+    "templates/level3/regression-report.md",
+    "templates/level3/handoff.md",
+    "templates/level4/requirements-analysis.md",
 ]
 
 
@@ -37,8 +47,11 @@ class TemplateTests(unittest.TestCase):
     def test_required_sections(self):
         required_sections = {
             "templates/level1/project-brief.md": ["目标用户", "核心路径", "本次不做", "验收标准"],
-            "templates/level2/change-proposal.md": ["当前行为", "期望行为", "影响范围", "回归范围"],
-            "templates/level3/prd.md": ["目标用户", "MVP", "不做清单", "验收标准", "成功指标"],
+            "templates/level2/requirements.md": ["目标用户", "范围", "验收标准", "待确认"],
+            "templates/level2/operations-readiness.md": ["备份", "回滚", "监控", "运营责任"],
+            "templates/level3/change-proposal.md": ["当前行为", "期望行为", "影响范围", "回归范围"],
+            "templates/level3/regression-report.md": ["基线", "失败复现", "受影响回归", "Review"],
+            "templates/level4/requirements-analysis.md": ["机会与问题", "MVP", "方案比较", "不做"],
             "templates/common/gate-report.md": ["已确认事实", "验证证据", "风险", "推荐决策", "等待批准"],
         }
         for relative, sections in required_sections.items():

@@ -49,6 +49,18 @@ class PackageValidationTests(unittest.TestCase):
         self.assertEqual(evals["version"], version)
         self.assertIn(f"## [{version}]", changelog)
 
+    def test_package_contract_exposes_four_active_levels(self) -> None:
+        self.assertEqual(
+            workflow.LEVEL_SOPS,
+            {
+                1: "LEVEL1-快速验证与轻量交付流程.md",
+                2: "LEVEL2-可持续运营项目开发流程.md",
+                3: "LEVEL3-已有与开源项目改进流程.md",
+                4: "LEVEL4-复杂项目需求分析流程.md",
+            },
+        )
+        self.assertTrue((ROOT / "references" / "project-vibe-spec-bridge.md").is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

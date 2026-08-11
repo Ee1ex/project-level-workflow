@@ -38,11 +38,12 @@ class WorkflowStateTests(unittest.TestCase):
             self.assertFalse(state["permissions"]["allow_create_draft_pr"])
 
     def test_validate_accepts_valid_state(self):
-        with tempfile.TemporaryDirectory() as temp:
-            self.assertEqual(run_cli("init", "--project", temp, "--level", "2").returncode, 0)
-            result = run_cli("validate", "--project", temp)
-            self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn("状态有效", result.stdout)
+        for level in ("1", "2", "3", "4"):
+            with self.subTest(level=level), tempfile.TemporaryDirectory() as temp:
+                self.assertEqual(run_cli("init", "--project", temp, "--level", level).returncode, 0)
+                result = run_cli("validate", "--project", temp)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn(f"LEVEL {level}", result.stdout)
 
     def test_validate_rejects_missing_field_invalid_level_and_absolute_path(self):
         cases = [
@@ -137,7 +138,7 @@ class WorkflowStateTests(unittest.TestCase):
     def test_migrate_supported_state_and_rejects_future_schema(self):
         with tempfile.TemporaryDirectory() as temp:
             project = Path(temp)
-            self.assertEqual(run_cli("init", "--project", temp, "--level", "2").returncode, 0)
+            self.assertEqual(run_cli("init", "--project", temp, "--level", "1").returncode, 0)
             state_path = project / ".project-workflow" / "state.json"
             state = json.loads(state_path.read_text(encoding="utf-8"))
             state["schema_version"] = "0.9.0"
@@ -146,13 +147,73 @@ class WorkflowStateTests(unittest.TestCase):
             migrated = run_cli("migrate", "--project", temp)
             self.assertEqual(migrated.returncode, 0, migrated.stderr)
             current = json.loads(state_path.read_text(encoding="utf-8"))
-            self.assertEqual(current["schema_version"], "1.0.0")
+            self.assertEqual(current["schema_version"], "1.1.0")
+            self.assertEqual(current["level"], 1)
             self.assertFalse(current["permissions"]["allow_push_own_branch"])
+            self.assertEqual(current["status"], "waiting_approval")
+            self.assertEqual(current["gate"], "level-migration-review")
+            backup = json.loads(
+                (project / ".project-workflow" / "state.backup.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(backup["schema_version"], "0.9.0")
+            self.assertEqual(backup["level"], 1)
+            status = (project / "docs" / "project-workflow" / "STATUS.md").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("旧 LEVEL", status)
+            self.assertIn("新 LEVEL", status)
+            self.assertIn("迁移原因", status)
             current["schema_version"] = "9.0.0"
             state_path.write_text(json.dumps(current, ensure_ascii=False), encoding="utf-8")
             rejected = run_cli("migrate", "--project", temp)
             self.assertNotEqual(rejected.returncode, 0)
             self.assertIn("不支持", rejected.stderr)
+
+    def test_migrate_maps_legacy_levels_to_new_semantics(self):
+        expected = {1: 1, 2: 3, 3: 4}
+        for old_level, new_level in expected.items():
+            with self.subTest(old_level=old_level), tempfile.TemporaryDirectory() as temp:
+                self.assertEqual(run_cli("init", "--project", temp, "--level", "1").returncode, 0)
+                state_path = Path(temp) / ".project-workflow" / "state.json"
+                state = json.loads(state_path.read_text(encoding="utf-8"))
+                state["schema_version"] = "1.0.0"
+                state["level"] = old_level
+                state_path.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+                migrated = run_cli("migrate", "--project", temp)
+                self.assertEqual(migrated.returncode, 0, migrated.stderr)
+                current = json.loads(state_path.read_text(encoding="utf-8"))
+                self.assertEqual(current["level"], new_level)
+                self.assertEqual(current["gate"], "level-migration-review")
+                self.assertEqual(current["status"], "waiting_approval")
+
+    def test_legacy_level_three_can_be_reconfirmed_as_new_level_two(self):
+        with tempfile.TemporaryDirectory() as temp:
+            self.assertEqual(run_cli("init", "--project", temp, "--level", "1").returncode, 0)
+            state_path = Path(temp) / ".project-workflow" / "state.json"
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            state["schema_version"] = "1.0.0"
+            state["level"] = 3
+            state_path.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+            migrated = run_cli(
+                "migrate",
+                "--project",
+                temp,
+                "--target-level",
+                "2",
+                "--approved-by",
+                "owner",
+                "--reason",
+                "确认自有线上产品责任模式并采用完整 PVS",
+            )
+            self.assertEqual(migrated.returncode, 0, migrated.stderr)
+            current = json.loads(state_path.read_text(encoding="utf-8"))
+            self.assertEqual(current["level"], 2)
+            self.assertEqual(current["status"], "waiting_approval")
+            self.assertEqual(current["gate"], "level-migration-review")
+            confirmation = current["history"][-1]
+            self.assertEqual(confirmation["event"], "level_reconfirmed")
+            self.assertEqual(confirmation["approved_by"], "owner")
+            self.assertIn("完整 PVS", confirmation["reason"])
 
 
 if __name__ == "__main__":

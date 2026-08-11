@@ -17,7 +17,8 @@ from urllib.parse import unquote
 
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.1.0"
+LEGACY_SCHEMA_VERSIONS = {"0.9.0", "1.0.0"}
 SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
 REQUIRED_FIELDS = (
     "schema_version",
@@ -41,9 +42,21 @@ SENSITIVE_KEY_PARTS = ("password", "secret", "token", "api_key", "private_key")
 MANAGED_START = "<!-- project-level-workflow:start -->"
 MANAGED_END = "<!-- project-level-workflow:end -->"
 LEVEL_SOPS = {
-    1: "LEVEL1-小型项目开发流程.md",
-    2: "LEVEL2-已有与开源项目改进流程.md",
-    3: "LEVEL3-持续运营产品开发流程.md",
+    1: "LEVEL1-快速验证与轻量交付流程.md",
+    2: "LEVEL2-可持续运营项目开发流程.md",
+    3: "LEVEL3-已有与开源项目改进流程.md",
+    4: "LEVEL4-复杂项目需求分析流程.md",
+}
+LEGACY_LEVEL_MIGRATION = {
+    1: 1,
+    2: 3,
+    3: 4,
+}
+LEVEL_MODES = {
+    1: "PVS-Lite：保留规则、文档地图、Brief、状态和待验证事项；快速实现，集中做核心路径冒烟。",
+    2: "完整 PVS：维护需求、设计、数据、决策、进度、验证、发布、回滚和运营责任；测试按风险与里程碑集中安排。",
+    3: "已有/开源改进：保留项目地图、权限与贡献规则、修改前基线、问题复现、受影响回归、CI、Review、PR 和交接。",
+    4: "只做需求分析：输出范围、MVP、方案比较、风险、验收和待确认事项；不写代码、不改数据库、不部署、不做自动化实现。",
 }
 
 
@@ -161,8 +174,8 @@ def validate_state(data: dict[str, Any], project: Path) -> list[str]:
         data.get("workflow_version", "")
     ):
         errors.append("workflow_version 必须是 SemVer")
-    if data.get("level") not in (1, 2, 3):
-        errors.append("level 只允许 1、2 或 3")
+    if data.get("level") not in (1, 2, 3, 4):
+        errors.append("level 只允许 1、2、3 或 4")
     if data.get("risk") not in ("R1", "R2", "R3", "R4"):
         errors.append("risk 只允许 R1、R2、R3 或 R4")
     if data.get("status") not in ("in_progress", "waiting_approval", "completed", "blocked"):
@@ -224,9 +237,13 @@ LEVEL {state['level']} / {state['stage']} / 尚未创建任务。
 
 LEVEL 已确认，等待初始化文档和首个任务。
 
+## 最近等级迁移
+
+- 无等级迁移记录。
+
 ## 推荐选择与下一步
 
-读取对应 LEVEL SOP，创建最小文档并定义首个可验收任务。
+读取 `{LEVEL_SOPS[state['level']]}`，创建对应文档并定义首个可验收任务。
 """
 
 
@@ -241,6 +258,35 @@ def _format_items(items: list[Any], empty_message: str) -> str:
         else:
             lines.append(f"- {item}")
     return "\n".join(lines)
+
+
+def _migration_status(state: dict[str, Any]) -> str:
+    history = state.get("history") or []
+    migrations = [
+        event
+        for event in history
+        if isinstance(event, dict)
+        and event.get("event") in {"level_migrated", "level_reconfirmed"}
+    ]
+    if not migrations:
+        return "- 无等级迁移记录。"
+    event = migrations[-1]
+    old_level = event.get("old_level", "未知")
+    new_level = event.get("new_level", "未知")
+    from_schema = event.get("from_schema", "未知")
+    to_schema = event.get("to_schema", state.get("schema_version", "未知"))
+    reason = event.get("reason", "未记录")
+    confirmation = event.get("approved_by") or "无；未自动批准 Gate"
+    return "\n".join(
+        [
+            f"- 旧 LEVEL：{old_level}",
+            f"- 新 LEVEL：{new_level}",
+            f"- 迁移版本：Schema {from_schema} → {to_schema}",
+            f"- 迁移原因：{reason}",
+            f"- 用户重确认：{confirmation}",
+            "- 迁移后的 Gate 未自动批准；需要通过 `level-migration-review` 后继续。",
+        ]
+    )
 
 
 def render_status(data: dict[str, Any]) -> str:
@@ -284,9 +330,13 @@ LEVEL {data['level']} / {data['stage']} / {task_summary}
 
 {gate}
 
+## 最近等级迁移
+
+{_migration_status(data)}
+
 ## 推荐选择与下一步
 
-{task.get('next_step') or '读取对应 LEVEL SOP，选择下一个最小可验收任务。'}
+{task.get('next_step') or f"读取 `{LEVEL_SOPS[data['level']]}`，选择下一个最小可验收任务。"}
 """
 
 
@@ -443,14 +493,49 @@ def command_migrate(args: argparse.Namespace) -> int:
             return 1
         print("状态 Schema 已是最新版本")
         return 0
-    if source_version != "0.9.0":
+    if source_version not in LEGACY_SCHEMA_VERSIONS:
         print(f"不支持从 Schema {source_version} 迁移", file=sys.stderr)
         return 1
+
+    old_level = state.get("level")
+    if old_level not in LEGACY_LEVEL_MIGRATION:
+        print("旧状态的 level 必须是旧 LEVEL 1、2 或 3", file=sys.stderr)
+        return 1
+
+    explicit_target = getattr(args, "target_level", None)
+    approved_by = (getattr(args, "approved_by", None) or "").strip()
+    reason = (getattr(args, "reason", None) or "").strip()
+    if explicit_target is not None:
+        if explicit_target != 2 or old_level != 3:
+            print(
+                "只有旧 LEVEL 3 可以通过显式重确认改为新 LEVEL 2",
+                file=sys.stderr,
+            )
+            return 2
+        if not approved_by or not reason:
+            print("改为新 LEVEL 2 必须同时提供 approved-by 和 reason", file=sys.stderr)
+            return 2
+        new_level = explicit_target
+        migration_event_name = "level_reconfirmed"
+        migration_reason = reason
+    else:
+        if approved_by or reason:
+            print("approved-by 和 reason 只能与 --target-level 2 一起使用", file=sys.stderr)
+            return 2
+        new_level = LEGACY_LEVEL_MIGRATION[old_level]
+        migration_event_name = "level_migrated"
+        migration_reason = (
+            f"兼容迁移旧 LEVEL {old_level} 的数字语义："
+            f"旧 LEVEL {old_level} → 新 LEVEL {new_level}。"
+        )
 
     previous = json.loads(json.dumps(state, ensure_ascii=False))
     now = utc_now()
     state["schema_version"] = SCHEMA_VERSION
     state["workflow_version"] = load_version()
+    state["level"] = new_level
+    state["gate"] = "level-migration-review"
+    state["status"] = "waiting_approval"
     state.setdefault(
         "permissions",
         {
@@ -460,9 +545,13 @@ def command_migrate(args: argparse.Namespace) -> int:
     )
     state.setdefault("history", []).append(
         {
-            "event": "schema_migrated",
-            "from": source_version,
-            "to": SCHEMA_VERSION,
+            "event": migration_event_name,
+            "old_level": old_level,
+            "new_level": new_level,
+            "from_schema": source_version,
+            "to_schema": SCHEMA_VERSION,
+            "reason": migration_reason,
+            **({"approved_by": approved_by} if approved_by else {}),
             "at": now,
         }
     )
@@ -474,7 +563,11 @@ def command_migrate(args: argparse.Namespace) -> int:
     atomic_write_json(backup_path, previous)
     atomic_write_json(state_path, state)
     atomic_write_text(status_path, render_status(state))
-    print(f"已从 Schema {source_version} 迁移到 {SCHEMA_VERSION}")
+    print(
+        f"已从 Schema {source_version} 迁移到 {SCHEMA_VERSION}；"
+        f"旧 LEVEL {old_level} → 新 LEVEL {new_level}；"
+        "迁移后的 Gate 等待人工确认"
+    )
     return 0
 
 
@@ -484,12 +577,8 @@ def command_doctor(args: argparse.Namespace) -> int:
     checks.append(("Python 3.10+", sys.version_info >= (3, 10), sys.version.split()[0]))
     checks.append(("Git 命令", shutil.which("git") is not None, shutil.which("git") or "未发现"))
 
-    level_docs = [
-        root / "LEVEL1-小型项目开发流程.md",
-        root / "LEVEL2-已有与开源项目改进流程.md",
-        root / "LEVEL3-持续运营产品开发流程.md",
-    ]
-    checks.append(("三份 LEVEL SOP", all(path.is_file() for path in level_docs), "根目录"))
+    level_docs = [root / filename for filename in LEVEL_SOPS.values()]
+    checks.append(("四份 LEVEL SOP", all(path.is_file() for path in level_docs), "根目录"))
     for relative in [
         "SKILL.md",
         "VERSION",
@@ -499,6 +588,10 @@ def command_doctor(args: argparse.Namespace) -> int:
         "references/state-protocol.md",
         "references/tool-routing.md",
         "references/platform-compatibility.md",
+        "references/project-vibe-spec-bridge.md",
+        "adapters/codex/AGENTS.fragment.md",
+        "adapters/claude-code/CLAUDE.fragment.md",
+        "adapters/cursor/project-level-workflow.mdc",
     ]:
         path = root / relative
         checks.append((relative, path.is_file(), str(path)))
@@ -598,6 +691,7 @@ def command_render_adapter(args: argparse.Namespace) -> int:
     rendered = template_path.read_text(encoding="utf-8")
     rendered = rendered.replace("{{LEVEL}}", str(state["level"]))
     rendered = rendered.replace("{{SOP}}", LEVEL_SOPS[state["level"]])
+    rendered = rendered.replace("{{LEVEL_MODE}}", LEVEL_MODES[state["level"]])
 
     if target_path.exists():
         existing = target_path.read_text(encoding="utf-8")
@@ -882,6 +976,7 @@ def validate_package(root: Path) -> list[str]:
         "VERSION",
         "CHANGELOG.md",
         "LICENSE",
+        *LEVEL_SOPS.values(),
         "LEVEL1-小型项目开发流程.md",
         "LEVEL2-已有与开源项目改进流程.md",
         "LEVEL3-持续运营产品开发流程.md",
@@ -893,6 +988,7 @@ def validate_package(root: Path) -> list[str]:
         "references/tool-routing.md",
         "references/platform-compatibility.md",
         "references/git-and-draft-pr.md",
+        "references/project-vibe-spec-bridge.md",
         "adapters/codex/AGENTS.fragment.md",
         "adapters/claude-code/CLAUDE.fragment.md",
         "adapters/cursor/project-level-workflow.mdc",
@@ -921,6 +1017,8 @@ def validate_package(root: Path) -> list[str]:
         errors.append("VERSION 不是合法 SemVer")
     if schema.get("properties", {}).get("workflow_version", {}).get("const") != version:
         errors.append("Schema workflow_version 与 VERSION 不一致")
+    if schema.get("properties", {}).get("level", {}).get("enum") != [1, 2, 3, 4]:
+        errors.append("Schema level.enum 必须是 [1, 2, 3, 4]")
     if evals.get("version") != version:
         errors.append("evals 版本与 VERSION 不一致")
     changelog = (root / "CHANGELOG.md").read_text(encoding="utf-8")
@@ -974,8 +1072,21 @@ def validate_package(root: Path) -> list[str]:
         "adapters/cursor/project-level-workflow.mdc",
     ):
         adapter = (root / relative).read_text(encoding="utf-8")
-        if "{{LEVEL}}" not in adapter or "{{SOP}}" not in adapter:
-            errors.append(f"适配器未使用统一 LEVEL/SOP 占位：{relative}")
+        if (
+            "{{LEVEL}}" not in adapter
+            or "{{SOP}}" not in adapter
+            or "{{LEVEL_MODE}}" not in adapter
+        ):
+            errors.append(f"适配器未使用统一 LEVEL/SOP/LEVEL_MODE 占位：{relative}")
+    compatibility_targets = {
+        "LEVEL1-小型项目开发流程.md": LEVEL_SOPS[1],
+        "LEVEL2-已有与开源项目改进流程.md": LEVEL_SOPS[3],
+        "LEVEL3-持续运营产品开发流程.md": LEVEL_SOPS[2],
+    }
+    for relative, target in compatibility_targets.items():
+        text = (root / relative).read_text(encoding="utf-8")
+        if "兼容" not in text or target not in text:
+            errors.append(f"旧 LEVEL 入口缺少兼容迁移说明：{relative}")
     return errors
 
 
@@ -995,7 +1106,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     init_parser = subparsers.add_parser("init", help="初始化项目流程状态")
     init_parser.add_argument("--project", required=True)
-    init_parser.add_argument("--level", required=True, type=int, choices=(1, 2, 3))
+    init_parser.add_argument("--level", required=True, type=int, choices=(1, 2, 3, 4))
     init_parser.add_argument("--force", action="store_true")
     init_parser.set_defaults(handler=command_init)
 
@@ -1017,6 +1128,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     migrate_parser = subparsers.add_parser("migrate", help="迁移项目状态 Schema")
     migrate_parser.add_argument("--project", required=True)
+    migrate_parser.add_argument(
+        "--target-level",
+        type=int,
+        choices=(2,),
+        help="仅旧 LEVEL 3 可显式重确认到新 LEVEL 2",
+    )
+    migrate_parser.add_argument("--approved-by", help="新 LEVEL 2 重确认的用户或角色")
+    migrate_parser.add_argument("--reason", help="新 LEVEL 2 重确认原因")
     migrate_parser.set_defaults(handler=command_migrate)
 
     doctor_parser = subparsers.add_parser("doctor", help="检查 Skill 包和项目环境")
