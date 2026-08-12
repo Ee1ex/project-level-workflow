@@ -44,7 +44,7 @@ if ((Split-Path -Leaf $target) -ne 'project-level-workflow') {
 }
 
 Write-Host "将卸载 project-level-workflow：$target"
-Write-Host '托管目录包含四份活动 LEVEL SOP 和旧文件名兼容入口；只删除该托管目录。'
+Write-Host '托管目录包含统一 LEVEL.md；只删除该托管目录。'
 Write-Host '项目状态 .project-workflow 与 docs/project-workflow 将保留。'
 if (-not (Test-Path -LiteralPath $target)) {
     Write-Host '未发现安装目录，无需处理。'

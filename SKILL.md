@@ -55,16 +55,7 @@ compatibility: Codex、Claude Code、Cursor；核心脚本需要 Python 3.10+，
 - 改用其他 LEVEL 会省略或增加什么。
 - 需要项目负责人确认的问题。
 
-用户明确确认前，不初始化正式流程、不写代码、不创建数据库、不部署、不创建远程资源。确认后只读取当前活动 SOP：
-
-| LEVEL | 权威 SOP |
-| --- | --- |
-| 1 | `LEVEL1-快速验证与轻量交付流程.md` |
-| 2 | `LEVEL2-可持续运营项目开发流程.md` |
-| 3 | `LEVEL3-已有与开源项目改进流程.md` |
-| 4 | `LEVEL4-复杂项目需求分析流程.md` |
-
-旧文件名只作为兼容入口，不再作为活动流程引用。
+用户明确确认前，不初始化正式流程、不写代码、不创建数据库、不部署、不创建远程资源。确认后读取根目录唯一权威文档 `LEVEL.md` 中当前等级的章节，不加载或维护分散的 LEVEL SOP。
 
 ## 第三步：初始化最小项目文档
 
@@ -122,7 +113,7 @@ Git 默认不推送、不创建 Draft PR；`allow_push_own_branch=false`、`allo
 
 ## 平台适配
 
-读取 `references/platform-compatibility.md`。Codex、Claude Code 和 Cursor 只处理路径、发现和格式差异，均引用当前活动 SOP，不重写等级流程。
+读取 `references/platform-compatibility.md`。Codex、Claude Code 和 Cursor 只处理路径、发现和格式差异，均引用 `LEVEL.md` 的当前等级章节，不重写等级流程。
 
 ## 每轮输出
 

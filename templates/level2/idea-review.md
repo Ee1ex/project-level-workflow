@@ -1,6 +1,4 @@
-# LEVEL 3 机会与立项审查
-
-> 兼容说明：此模板来自旧 LEVEL 3 的持续运营流程；当前持续运营活动等级为 LEVEL 2。新 LEVEL 3 的改进任务使用 `project-map.md`、`change-proposal.md`、`regression-report.md` 和 `handoff.md`。
+# LEVEL 2 机会与立项审查
 
 - 状态：草稿
 - 负责人：<!-- 产品责任人 -->

@@ -41,7 +41,7 @@ if [[ "$scope" == "project" && -f "$project_path/.project-workflow/state.json" ]
   fi
 fi
 
-# 四份活动 SOP、三个旧文件名兼容入口、VERSION、conflict 与 backup 策略由同目录安装器统一执行。
+# 统一 LEVEL.md、VERSION、conflict 与 backup 策略由同目录安装器统一执行，不再安装分散或旧版 LEVEL 文档。
 # 包括 --dry-run 在内的全部公开参数都会保持原始参数边界转发。
 # shellcheck disable=SC2086 -- 参数通过 "$@" 保持原始边界。
 exec "$installer" "${forward_args[@]}" --mode update

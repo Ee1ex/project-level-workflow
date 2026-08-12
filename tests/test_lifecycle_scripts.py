@@ -46,18 +46,14 @@ class LifecycleScriptTests(unittest.TestCase):
                 self.assertIn("backup", content)
                 self.assertIn("conflict", content)
 
-    def test_installers_include_all_active_sops_and_compatibility_entries(self) -> None:
-        expected = (
-            "LEVEL1-快速验证与轻量交付流程",
-            "LEVEL2-可持续运营项目开发流程",
-            "LEVEL3-已有与开源项目改进流程",
-            "LEVEL4-复杂项目需求分析流程",
-        )
+    def test_installers_include_only_the_unified_level_document(self) -> None:
         for name in ("install.ps1", "install.sh"):
             content = self._read(name)
-            for item in expected:
-                with self.subTest(script=name, item=item):
-                    self.assertIn(item, content)
+            self.assertIn("LEVEL.md", content)
+            self.assertNotIn("LEVEL1-", content)
+            self.assertNotIn("LEVEL2-", content)
+            self.assertNotIn("LEVEL3-", content)
+            self.assertNotIn("LEVEL4-", content)
 
     def test_update_runs_doctor_and_state_migration_before_replacement(self) -> None:
         for name in ("update.ps1", "update.sh"):
