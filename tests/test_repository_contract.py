@@ -7,29 +7,29 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class RepositoryContractTests(unittest.TestCase):
-    def test_canonical_level_docs_exist(self):
-        expected = [
-            "LEVEL1-快速验证与轻量交付流程.md",
-            "LEVEL2-可持续运营项目开发流程.md",
-            "LEVEL3-已有与开源项目改进流程.md",
-            "LEVEL4-复杂项目需求分析流程.md",
-        ]
-        for relative in expected:
-            self.assertTrue((ROOT / relative).is_file(), relative)
+    def test_level_md_is_the_only_root_level_document(self):
+        level_doc = ROOT / "LEVEL.md"
+        self.assertTrue(level_doc.is_file())
+        self.assertEqual(
+            [path.name for path in ROOT.glob("LEVEL*.md")],
+            ["LEVEL.md"],
+        )
 
-    def test_legacy_level_docs_are_explicit_compatibility_entries(self):
-        expected_targets = {
-            "LEVEL1-小型项目开发流程.md": "LEVEL1-快速验证与轻量交付流程.md",
-            "LEVEL2-已有与开源项目改进流程.md": "LEVEL3-已有与开源项目改进流程.md",
-            "LEVEL3-持续运营产品开发流程.md": "LEVEL2-可持续运营项目开发流程.md",
-        }
-        for relative, target in expected_targets.items():
-            text = (ROOT / relative).read_text(encoding="utf-8")
-            self.assertIn("兼容", text, relative)
-            self.assertIn(target, text, relative)
+    def test_level_md_defines_all_four_current_levels(self):
+        text = (ROOT / "LEVEL.md").read_text(encoding="utf-8")
+        for heading in (
+            "## LEVEL 1：快速验证与轻量交付",
+            "## LEVEL 2：可持续运营项目",
+            "## LEVEL 3：已有、团队与开源项目改进",
+            "## LEVEL 4：复杂项目需求分析",
+        ):
+            self.assertIn(heading, text)
+        self.assertIn("持续更新不等于持续运营", text)
+        self.assertIn("旧 LEVEL 2 → 新 LEVEL 3", text)
+        self.assertIn("旧 LEVEL 3 → 新 LEVEL 4", text)
 
     def test_public_metadata_exists(self):
-        for relative in ["README.md", "VERSION", "CHANGELOG.md", "LICENSE"]:
+        for relative in ["README.md", "LEVEL.md", "VERSION", "CHANGELOG.md", "LICENSE"]:
             self.assertTrue((ROOT / relative).is_file(), relative)
 
     def test_version_is_semver(self):

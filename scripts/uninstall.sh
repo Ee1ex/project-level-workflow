@@ -41,7 +41,7 @@ case "$target" in
 esac
 
 echo "将卸载 project-level-workflow：$target"
-echo "托管目录包含四份活动 LEVEL SOP 和旧文件名兼容入口；只删除该托管目录。"
+echo "托管目录包含统一 LEVEL.md；只删除该托管目录。"
 echo "项目状态 .project-workflow 与 docs/project-workflow 将保留。"
 [[ -e "$target" ]] || { echo "未发现安装目录，无需处理。"; exit 0; }
 if [[ "$dry_run" == "true" ]]; then

@@ -24,7 +24,7 @@ class DoctorTests(unittest.TestCase):
         result = run_cli("doctor", "--package-root", str(ROOT))
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("PASS", result.stdout)
-        self.assertIn("四份 LEVEL SOP", result.stdout)
+        self.assertIn("统一 LEVEL.md", result.stdout)
 
     def test_doctor_fails_when_required_files_are_missing(self):
         with tempfile.TemporaryDirectory() as temp:

@@ -6,7 +6,7 @@
 
 ## 共享核心
 
-三个平台共同读取根目录 `SKILL.md`、四份活动 LEVEL SOP、`references/`、`templates/` 和项目状态。旧 SOP 文件仅为兼容入口。平台适配器不得复制或改写业务流程，只显示当前 LEVEL、活动 SOP、PVS/分析边界和状态路径。
+三个平台共同读取根目录 `SKILL.md`、唯一权威 `LEVEL.md`、`references/`、`templates/` 和项目状态。平台适配器不得复制或改写业务流程，只显示当前 LEVEL、`LEVEL.md` 对应章节、PVS/分析边界和状态路径。
 
 ## Codex
 
@@ -25,7 +25,7 @@
 - 使用 `.cursor/rules/project-level-workflow.mdc` 项目规则。
 - 可同时使用简洁 `AGENTS.md` 作为通用项目入口。
 - 不生成旧式 `.cursorrules`。
-- 规则引用共享 SOP、状态和当前任务，不复制完整流程。
+- 规则引用共享 `LEVEL.md`、状态和当前任务，不复制完整流程。
 
 ## 四级适配策略
 

@@ -79,10 +79,7 @@ mkdir -p -- "$(dirname -- "$target")"
 [[ -z "$backup" ]] || mv -- "$target" "$backup"
 mkdir -p -- "$target"
 
-items=(SKILL.md README.md VERSION CHANGELOG.md LICENSE \
-  LEVEL1-快速验证与轻量交付流程.md LEVEL2-可持续运营项目开发流程.md \
-  LEVEL3-已有与开源项目改进流程.md LEVEL4-复杂项目需求分析流程.md \
-  LEVEL1-小型项目开发流程.md LEVEL2-已有与开源项目改进流程.md LEVEL3-持续运营产品开发流程.md \
+items=(SKILL.md README.md LEVEL.md VERSION CHANGELOG.md LICENSE \
   references templates schemas scripts adapters evals)
 for item in "${items[@]}"; do
   [[ -e "$package_root/$item" ]] || continue

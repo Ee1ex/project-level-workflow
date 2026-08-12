@@ -41,11 +41,12 @@ REQUIRED_FIELDS = (
 SENSITIVE_KEY_PARTS = ("password", "secret", "token", "api_key", "private_key")
 MANAGED_START = "<!-- project-level-workflow:start -->"
 MANAGED_END = "<!-- project-level-workflow:end -->"
-LEVEL_SOPS = {
-    1: "LEVEL1-快速验证与轻量交付流程.md",
-    2: "LEVEL2-可持续运营项目开发流程.md",
-    3: "LEVEL3-已有与开源项目改进流程.md",
-    4: "LEVEL4-复杂项目需求分析流程.md",
+LEVEL_DOCUMENT = "LEVEL.md"
+LEVEL_REFERENCES = {
+    1: "LEVEL.md#level-1快速验证与轻量交付",
+    2: "LEVEL.md#level-2可持续运营项目",
+    3: "LEVEL.md#level-3已有团队与开源项目改进",
+    4: "LEVEL.md#level-4复杂项目需求分析",
 }
 LEGACY_LEVEL_MIGRATION = {
     1: 1,
@@ -231,7 +232,7 @@ LEVEL {state['level']} / {state['stage']} / 尚未创建任务。
 
 ## 当前风险与未决事项
 
-- 需要按对应 LEVEL SOP 创建最小文档包。
+- 需要按 `LEVEL.md` 中对应等级创建最小文档包。
 
 ## 当前人工 Gate
 
@@ -243,7 +244,7 @@ LEVEL 已确认，等待初始化文档和首个任务。
 
 ## 推荐选择与下一步
 
-读取 `{LEVEL_SOPS[state['level']]}`，创建对应文档并定义首个可验收任务。
+读取 `{LEVEL_REFERENCES[state['level']]}`，创建对应文档并定义首个可验收任务。
 """
 
 
@@ -336,7 +337,7 @@ LEVEL {data['level']} / {data['stage']} / {task_summary}
 
 ## 推荐选择与下一步
 
-{task.get('next_step') or f"读取 `{LEVEL_SOPS[data['level']]}`，选择下一个最小可验收任务。"}
+{task.get('next_step') or f"读取 `{LEVEL_REFERENCES[data['level']]}`，选择下一个最小可验收任务。"}
 """
 
 
@@ -577,8 +578,7 @@ def command_doctor(args: argparse.Namespace) -> int:
     checks.append(("Python 3.10+", sys.version_info >= (3, 10), sys.version.split()[0]))
     checks.append(("Git 命令", shutil.which("git") is not None, shutil.which("git") or "未发现"))
 
-    level_docs = [root / filename for filename in LEVEL_SOPS.values()]
-    checks.append(("四份 LEVEL SOP", all(path.is_file() for path in level_docs), "根目录"))
+    checks.append(("统一 LEVEL.md", (root / LEVEL_DOCUMENT).is_file(), "根目录唯一等级流程"))
     for relative in [
         "SKILL.md",
         "VERSION",
@@ -690,7 +690,7 @@ def command_render_adapter(args: argparse.Namespace) -> int:
         return 1
     rendered = template_path.read_text(encoding="utf-8")
     rendered = rendered.replace("{{LEVEL}}", str(state["level"]))
-    rendered = rendered.replace("{{SOP}}", LEVEL_SOPS[state["level"]])
+    rendered = rendered.replace("{{LEVEL_DOC}}", LEVEL_REFERENCES[state["level"]])
     rendered = rendered.replace("{{LEVEL_MODE}}", LEVEL_MODES[state["level"]])
 
     if target_path.exists():
@@ -976,10 +976,7 @@ def validate_package(root: Path) -> list[str]:
         "VERSION",
         "CHANGELOG.md",
         "LICENSE",
-        *LEVEL_SOPS.values(),
-        "LEVEL1-小型项目开发流程.md",
-        "LEVEL2-已有与开源项目改进流程.md",
-        "LEVEL3-持续运营产品开发流程.md",
+        LEVEL_DOCUMENT,
         "schemas/workflow-state.schema.json",
         "evals/evals.json",
         "references/level-selection.md",
@@ -1074,19 +1071,13 @@ def validate_package(root: Path) -> list[str]:
         adapter = (root / relative).read_text(encoding="utf-8")
         if (
             "{{LEVEL}}" not in adapter
-            or "{{SOP}}" not in adapter
+            or "{{LEVEL_DOC}}" not in adapter
             or "{{LEVEL_MODE}}" not in adapter
         ):
-            errors.append(f"适配器未使用统一 LEVEL/SOP/LEVEL_MODE 占位：{relative}")
-    compatibility_targets = {
-        "LEVEL1-小型项目开发流程.md": LEVEL_SOPS[1],
-        "LEVEL2-已有与开源项目改进流程.md": LEVEL_SOPS[3],
-        "LEVEL3-持续运营产品开发流程.md": LEVEL_SOPS[2],
-    }
-    for relative, target in compatibility_targets.items():
-        text = (root / relative).read_text(encoding="utf-8")
-        if "兼容" not in text or target not in text:
-            errors.append(f"旧 LEVEL 入口缺少兼容迁移说明：{relative}")
+            errors.append(f"适配器未使用统一 LEVEL/LEVEL_DOC/LEVEL_MODE 占位：{relative}")
+    root_level_docs = sorted(path.name for path in root.glob("LEVEL*.md"))
+    if root_level_docs != [LEVEL_DOCUMENT]:
+        errors.append("根目录必须只保留统一 LEVEL.md，不得保留分散或旧版 LEVEL 文档")
     return errors
 
 
