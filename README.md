@@ -27,6 +27,8 @@
 
 ## `project-vibe-spec` 分层
 
+0.4.0 起，完整 PVS 治理规则和 starter 模板已内嵌在 `core/project-vibe-spec/PVS.md` 及其资源目录。安装本包后只显示一个 `project-level-workflow` Skill；四个 LEVEL 均不需要第二次下载或联网补齐 PVS。模板职责以 `templates/template-map.json` 为准。
+
 LEVEL 1 使用 PVS-Lite：至少保留项目规则、`AGENTS.md`、`DOCUMENT_MAP.md`、Project Brief、`STATUS.md`、`state.json`/备份和必要的待验证事项；需求跨模块、持久化或高风险时再增加 REQ、决策或技术文档。
 
 LEVEL 2 使用完整 PVS：复用已有文档目录，维护 PDD/PRD、Requirements/REQ、决策、业务流、UI/技术/API/数据/部署/运营文档及进度和验证证据。完整 PVS 不要求每次小改动都跑重型测试，测试按风险、功能集成、里程碑和版本完成阶段集中安排。

@@ -7,6 +7,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class EvalContractTests(unittest.TestCase):
+    def test_self_contained_pvs_cases_exist(self) -> None:
+        data = json.loads((ROOT / "evals" / "evals.json").read_text(encoding="utf-8"))
+        by_id = {case["id"]: case for case in data["cases"]}
+        for case_id in ("level2-bundled-pvs", "single-skill-offline", "independent-pvs-not-required"):
+            self.assertIn(case_id, by_id)
+        self.assertFalse(by_id["level2-bundled-pvs"]["expected_output"]["external_install"])
+        self.assertEqual(by_id["level2-bundled-pvs"]["expected_output"]["pvs_source"], "bundled")
+
     def test_eval_file_has_ten_complete_unique_cases(self) -> None:
         path = ROOT / "evals" / "evals.json"
         self.assertTrue(path.is_file(), "缺少 evals/evals.json")

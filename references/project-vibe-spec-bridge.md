@@ -1,6 +1,17 @@
-# Project Vibe Spec 分层桥接
+# Project Vibe Spec 包内分层桥接
 
-本文件只说明 Project Level Workflow 如何复用 `project-vibe-spec`；不修改或复制外部安装位置的原始 Skill。项目已有规则和事实文档优先，模板只补齐缺失职责。
+本文件说明 Project Level Workflow 如何按 `LEVEL.md` 加载包内 `core/project-vibe-spec/PVS.md`。`LEVEL.md` 始终是唯一的 LEVEL 权威；本桥接只规定 PVS 的加载深度和边界，不重新定义等级。
+
+运行时不安装、不下载、不查找、也不回退到外部 `project-vibe-spec` Skill。项目已有规则和事实文档优先，包内模板只补齐缺失职责；独立安装的同名 Skill 不属于本包托管范围。
+
+## 加载矩阵
+
+| LEVEL | PVS 范围 | 默认模板 | 边界 |
+| --- | --- | --- | --- |
+| 1 | 接管、事实、范围、验证 | 包内 PVS 的 `AGENTS.md`、`DOCUMENT_MAP.md` 与现有 LEVEL 1 模板 | 不加载完整治理包 |
+| 2 | 完整 PVS、两份 references 与 governance starter | `templates/template-map.json` | 不覆盖已有事实 |
+| 3 | 事实、跨模块、验证、Git | 既有仓库文档为主，PVS 补缺 | 不强制铺设完整治理包 |
+| 4 | 需求、方案、数据 Gate、风险 | 分析记录与现有 LEVEL 4 模板 | 不进入实现 |
 
 ## LEVEL 1：PVS-Lite
 
@@ -17,7 +28,7 @@ PVS-Lite 的目标是用最小可追溯底座支持快速验证和轻量交付�
 
 ## LEVEL 2：完整 PVS
 
-完整使用 `project-vibe-spec` 的接管、需求、设计、数据、决策、进度、验证和交付流程：
+完整加载包内 `core/project-vibe-spec/PVS.md`、两份 references 和 governance starter，执行接管、需求、设计、数据、决策、进度、验证和交付流程：
 
 - 复用或维护 `AGENTS.md`、`DOCUMENT_MAP.md` 和已有事实文档。
 - 维护 PDD/PRD、Requirements/LEDGER.md、详细 REQ、决策记录和进度记录。
@@ -47,4 +58,4 @@ LEVEL 4 只建立机会/问题、目标用户、场景、范围、不做、MVP�
 | 3 | 修改前基线、问题复现、失败测试/人工复现、受影响回归、CI、Review 和 PR | 交接、发布和维护者后续检查 |
 | 4 | 需求验收标准、方案比较、风险和待确认事项 | 后续完整流程的前置条件 |
 
-`project-vibe-spec` 的原始 Skill 仍是完整 PVS 的依据；本桥接文档只定义在四级模型中的深度和边界。
+包内 `core/project-vibe-spec/PVS.md` 是本工作流使用的 PVS 治理依据；本桥接文档只定义它在四级模型中的加载深度和边界。

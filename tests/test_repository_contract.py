@@ -65,6 +65,24 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertIn("Qima", skill)
         self.assertIn("不得直接调用", skill)
 
+    def test_only_root_skill_is_discoverable(self):
+        skill_files = sorted(
+            path.relative_to(ROOT).as_posix() for path in ROOT.rglob("SKILL.md")
+        )
+        self.assertEqual(skill_files, ["SKILL.md"])
+
+    def test_public_workflow_routes_to_embedded_pvs(self):
+        skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        bridge = (ROOT / "references" / "project-vibe-spec-bridge.md").read_text(
+            encoding="utf-8"
+        )
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        for text in (skill, bridge, readme):
+            self.assertIn("core/project-vibe-spec/PVS.md", text)
+            self.assertNotIn("另行安装 `project-vibe-spec`", text)
+        self.assertIn("templates/template-map.json", bridge)
+        self.assertIn("LEVEL.md", bridge)
+
 
 if __name__ == "__main__":
     unittest.main()

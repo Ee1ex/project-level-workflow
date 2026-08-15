@@ -42,6 +42,18 @@ SENSITIVE_KEY_PARTS = ("password", "secret", "token", "api_key", "private_key")
 MANAGED_START = "<!-- project-level-workflow:start -->"
 MANAGED_END = "<!-- project-level-workflow:end -->"
 LEVEL_DOCUMENT = "LEVEL.md"
+PVS_CORE = Path("core/project-vibe-spec")
+PVS_TEMPLATE_MAP = Path("templates/template-map.json")
+PVS_CORE_FILES = (
+    "PVS.md",
+    "SOURCE.md",
+    "references/decision-gates.md",
+    "references/document-maintenance.md",
+)
+EXTERNAL_PVS_INSTALL = re.compile(
+    r"(?:git\s+clone[^\n]*project-vibe-spec|skills[/\\]project-vibe-spec|\$project-vibe-spec)",
+    re.IGNORECASE,
+)
 LEVEL_REFERENCES = {
     1: "LEVEL.md#level-1快速验证与轻量交付",
     2: "LEVEL.md#level-2可持续运营项目",
@@ -139,6 +151,25 @@ def build_initial_state(project: Path, level: int) -> dict[str, Any]:
         ],
         "updated_at": now,
     }
+
+
+def _refresh_workflow_version(state: dict[str, Any]) -> bool:
+    current = load_version()
+    previous = state.get("workflow_version")
+    if previous == current:
+        return False
+    now = utc_now()
+    state["workflow_version"] = current
+    state["updated_at"] = now
+    state["history"].append(
+        {
+            "event": "workflow_version_updated",
+            "from_version": previous,
+            "to_version": current,
+            "at": now,
+        }
+    )
+    return True
 
 
 def _iter_values(value: Any, path: str = ""):
@@ -414,7 +445,7 @@ def _state_paths(project: Path) -> tuple[Path, Path, Path]:
 
 def command_status(args: argparse.Namespace) -> int:
     project = Path(args.project).expanduser().resolve()
-    state_path, _, status_path = _state_paths(project)
+    state_path, backup_path, status_path = _state_paths(project)
     try:
         state = _load_json(state_path)
     except ValueError as exc:
@@ -424,6 +455,14 @@ def command_status(args: argparse.Namespace) -> int:
     if errors:
         print("状态无效：\n- " + "\n- ".join(errors), file=sys.stderr)
         return 1
+    previous = json.loads(json.dumps(state, ensure_ascii=False))
+    if _refresh_workflow_version(state):
+        errors = validate_state(state, project)
+        if errors:
+            print("版本刷新后状态无效：\n- " + "\n- ".join(errors), file=sys.stderr)
+            return 1
+        atomic_write_json(backup_path, previous)
+        atomic_write_json(state_path, state)
     atomic_write_text(status_path, render_status(state))
     print(f"已刷新状态摘要：{status_path}")
     return 0
@@ -453,6 +492,7 @@ def command_transition(args: argparse.Namespace) -> int:
         return 1
 
     previous = json.loads(json.dumps(state, ensure_ascii=False))
+    _refresh_workflow_version(state)
     now = utc_now()
     state["stage"] = args.to_stage
     state["gate"] = args.next_gate
@@ -606,6 +646,22 @@ def command_doctor(args: argparse.Namespace) -> int:
             schema_valid = False
     checks.append(("状态 Schema JSON", schema_valid, str(schema_path)))
 
+    pvs_errors = _embedded_pvs_errors(root)
+    checks.append(
+        (
+            "PVS 包内内核",
+            not pvs_errors,
+            "; ".join(pvs_errors) or str(root / PVS_CORE),
+        )
+    )
+    checks.append(
+        (
+            "PVS 模板职责映射",
+            (root / PVS_TEMPLATE_MAP).is_file(),
+            str(root / PVS_TEMPLATE_MAP),
+        )
+    )
+
     if args.project:
         project = Path(args.project).expanduser().resolve()
         state_path = project / ".project-workflow" / "state.json"
@@ -626,6 +682,12 @@ def command_doctor(args: argparse.Namespace) -> int:
         print(f"{marker} {name}：{detail}")
         if not passed:
             required_failures += 1
+    independent_pvs = root.parent / "project-vibe-spec"
+    if independent_pvs.is_dir():
+        print(
+            f"WARN 独立 project-vibe-spec：{independent_pvs}；"
+            "本包不会读取、覆盖或删除该目录。"
+        )
     return 1 if required_failures else 0
 
 
@@ -967,6 +1029,68 @@ def _markdown_link_errors(root: Path, path: Path, text: str) -> list[str]:
     return errors
 
 
+def _embedded_pvs_errors(root: Path) -> list[str]:
+    errors: list[str] = []
+    core = root / PVS_CORE
+    for relative in PVS_CORE_FILES:
+        if not (core / relative).is_file():
+            errors.append(f"PVS 内核缺少文件：{PVS_CORE / relative}")
+    if (core / "SKILL.md").exists():
+        errors.append(
+            "PVS 内核不得包含第二个 Skill 入口：core/project-vibe-spec/SKILL.md"
+        )
+    source_path = core / "SOURCE.md"
+    if source_path.is_file():
+        try:
+            source = source_path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            errors.append(f"PVS 来源记录无法读取：{exc}")
+        else:
+            for marker in ("dnwwdwd/project-vibe-spec", "dae5315", "MIT"):
+                if marker not in source:
+                    errors.append(f"PVS 来源记录缺少：{marker}")
+
+    map_path = root / PVS_TEMPLATE_MAP
+    if not map_path.is_file():
+        errors.append(f"PVS 模板职责映射不存在：{PVS_TEMPLATE_MAP}")
+        return errors
+    try:
+        data = json.loads(map_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        errors.append(f"PVS 模板职责映射无法读取：{exc}")
+        return errors
+    roles = data.get("roles")
+    if data.get("version") != 1 or not isinstance(roles, list) or not roles:
+        errors.append("PVS 模板职责映射必须包含 version=1 和非空 roles")
+        return errors
+    names: set[str] = set()
+    defaults: set[str] = set()
+    for entry in roles:
+        if not isinstance(entry, dict):
+            errors.append("PVS 模板职责条目必须是对象")
+            continue
+        name = entry.get("name")
+        default = entry.get("default")
+        if not isinstance(name, str) or not name or name in names:
+            errors.append(f"PVS 模板职责名称无效或重复：{name}")
+        else:
+            names.add(name)
+        if not isinstance(default, str) or not default or default in defaults:
+            errors.append(f"PVS 默认模板无效或重复：{default}")
+        else:
+            defaults.add(default)
+            if not (root / default).is_file():
+                errors.append(f"PVS 默认模板不存在：{default}")
+        compatibility = entry.get("compatibility", [])
+        if not isinstance(compatibility, list):
+            errors.append(f"PVS compatibility 必须是数组：{name}")
+            continue
+        for relative in compatibility:
+            if not isinstance(relative, str) or not (root / relative).is_file():
+                errors.append(f"PVS 兼容模板不存在：{relative}")
+    return errors
+
+
 def validate_package(root: Path) -> list[str]:
     root = root.expanduser().resolve()
     errors: list[str] = []
@@ -979,6 +1103,11 @@ def validate_package(root: Path) -> list[str]:
         LEVEL_DOCUMENT,
         "schemas/workflow-state.schema.json",
         "evals/evals.json",
+        "core/project-vibe-spec/PVS.md",
+        "core/project-vibe-spec/SOURCE.md",
+        "core/project-vibe-spec/references/decision-gates.md",
+        "core/project-vibe-spec/references/document-maintenance.md",
+        "templates/template-map.json",
         "references/level-selection.md",
         "references/risk-and-permissions.md",
         "references/state-protocol.md",
@@ -999,6 +1128,7 @@ def validate_package(root: Path) -> list[str]:
     for relative in required:
         if not (root / relative).is_file():
             errors.append(f"缺少公共包文件：{relative}")
+    errors.extend(_embedded_pvs_errors(root))
     if errors:
         return errors
 
@@ -1047,6 +1177,8 @@ def validate_package(root: Path) -> list[str]:
         for pattern in secret_patterns:
             if pattern.search(text):
                 errors.append(f"公共 Markdown 疑似包含密钥：{relative}")
+        if relative != PVS_CORE / "SOURCE.md" and EXTERNAL_PVS_INSTALL.search(text):
+            errors.append(f"公共文件包含外部 PVS 安装或调用要求：{relative}")
         errors.extend(_markdown_table_errors(path, text))
         errors.extend(_markdown_link_errors(root, path, text))
 

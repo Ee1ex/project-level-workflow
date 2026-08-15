@@ -6,7 +6,7 @@
 
 ## 共享核心
 
-三个平台共同读取根目录 `SKILL.md`、唯一权威 `LEVEL.md`、`references/`、`templates/` 和项目状态。平台适配器不得复制或改写业务流程，只显示当前 LEVEL、`LEVEL.md` 对应章节、PVS/分析边界和状态路径。
+三个平台共同读取根目录 `SKILL.md`、唯一权威 `LEVEL.md`、`references/`、`templates/`、`core/project-vibe-spec/PVS.md` 和项目状态。平台适配器不得复制或改写业务流程，只显示当前 LEVEL、`LEVEL.md` 对应章节、包内 PVS 分层边界和状态路径。任何平台都不要求用户另装第二个 PVS Skill。
 
 ## Codex
 

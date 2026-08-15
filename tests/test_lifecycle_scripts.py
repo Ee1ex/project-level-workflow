@@ -62,6 +62,15 @@ class LifecycleScriptTests(unittest.TestCase):
                 self.assertIn("doctor", content)
                 self.assertIn("migrate", content)
 
+    def test_installers_validate_and_copy_embedded_core(self) -> None:
+        for name in ("install.ps1", "install.sh"):
+            with self.subTest(script=name):
+                content = self._read(name)
+                self.assertIn("validate-package", content)
+                self.assertIn("core", content)
+                self.assertIn("PVS 内核", content)
+                self.assertIn("project-vibe-spec", content)
+
     def test_uninstall_preserves_project_state_and_project_docs(self) -> None:
         for name in ("uninstall.ps1", "uninstall.sh"):
             with self.subTest(script=name):
@@ -69,6 +78,13 @@ class LifecycleScriptTests(unittest.TestCase):
                 self.assertIn(".project-workflow", content)
                 self.assertIn("docs/project-workflow", content)
                 self.assertIn("保留", content)
+
+    def test_uninstallers_leave_independent_pvs_untouched(self) -> None:
+        for name in ("uninstall.ps1", "uninstall.sh"):
+            with self.subTest(script=name):
+                content = self._read(name)
+                self.assertIn("独立 project-vibe-spec", content)
+                self.assertIn("不处理", content)
 
     def test_powershell_avoids_cross_shell_and_string_execution(self) -> None:
         forbidden = ("cmd /c", "bash -c", "sh -c", "Invoke-Expression", "iex ", "Start-Process")
