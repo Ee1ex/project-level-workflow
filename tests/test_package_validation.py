@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -53,6 +54,36 @@ class PackageValidationTests(unittest.TestCase):
         self.assertEqual(workflow.LEVEL_DOCUMENT, "LEVEL.md")
         self.assertEqual(set(workflow.LEVEL_MODES), {1, 2, 3, 4})
         self.assertTrue((ROOT / "references" / "project-vibe-spec-bridge.md").is_file())
+
+    def test_embedded_pvs_contract_is_required(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            package = Path(directory) / "package"
+            shutil.copytree(ROOT, package)
+            (package / "core" / "project-vibe-spec" / "PVS.md").unlink()
+            errors = workflow.validate_package(package)
+        self.assertIn("PVS 内核", " ".join(errors))
+
+    def test_nested_pvs_skill_entry_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            package = Path(directory) / "package"
+            shutil.copytree(ROOT, package)
+            nested = package / "core" / "project-vibe-spec" / "SKILL.md"
+            nested.write_text("---\nname: project-vibe-spec\n---\n", encoding="utf-8")
+            errors = workflow.validate_package(package)
+        self.assertIn("第二个 Skill", " ".join(errors))
+
+    def test_external_pvs_install_instruction_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            package = Path(directory) / "package"
+            shutil.copytree(ROOT, package)
+            readme = package / "README.md"
+            readme.write_text(
+                readme.read_text(encoding="utf-8")
+                + "\ngit clone https://example/project-vibe-spec.git\n",
+                encoding="utf-8",
+            )
+            errors = workflow.validate_package(package)
+        self.assertIn("外部 PVS", " ".join(errors))
 
 
 if __name__ == "__main__":

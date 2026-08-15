@@ -2,6 +2,15 @@
 
 本项目的所有重要变化都会记录在此文件中。
 
+## [0.4.0] - 2026-08-16
+
+- 将 Project Vibe Spec 治理内核、两份参考规则和完整 governance starter 嵌入 `core/project-vibe-spec/`，包内只保留根 `SKILL.md` 一个可发现入口。
+- 以 `templates/template-map.json` 确立 PVS starter 为 LEVEL 2 重叠治理职责的唯一默认模板，同时保留原 `templates/level2/` 路径作为兼容入口。
+- Doctor 与 `validate-package` 新增 PVS 内核完整性、模板映射、单 Skill 和无外部安装指令校验。
+- PowerShell 与 POSIX 安装器增加包预检、PVS 文件统计、staging 替换、冲突备份和失败回滚；独立安装的 `project-vibe-spec` 只告警，绝不修改或删除。
+- `status` 与 `transition` 在显式状态写入时安全刷新 `workflow_version`，保留旧状态备份和 `workflow_version_updated` 历史；只读 `validate` 保持字节级不变。
+- Codex、Claude Code、Cursor 适配器统一引用包内 Bridge 与 PVS 内核，并新增单 Skill、离线和无需独立 PVS 的 eval 覆盖。
+
 ## [0.3.0] - 2026-08-13
 
 - 将四级模型合并到根目录唯一权威文档 `LEVEL.md`，删除四份分散 SOP 和旧三级兼容入口。

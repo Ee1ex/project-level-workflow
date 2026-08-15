@@ -27,6 +27,16 @@ class AdapterTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         return Path(temp)
 
+    def test_all_adapters_reference_embedded_pvs_bridge(self):
+        for relative in (
+            "adapters/codex/AGENTS.fragment.md",
+            "adapters/claude-code/CLAUDE.fragment.md",
+            "adapters/cursor/project-level-workflow.mdc",
+        ):
+            text = (ROOT / relative).read_text(encoding="utf-8")
+            self.assertIn("references/project-vibe-spec-bridge.md", text)
+            self.assertIn("core/project-vibe-spec/PVS.md", text)
+
     def test_codex_preserves_user_content_and_is_idempotent(self):
         with tempfile.TemporaryDirectory() as temp:
             project = self._initialized_project(temp)

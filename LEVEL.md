@@ -13,6 +13,10 @@
 
 首次选择和责任模式变化必须由项目负责人确认。“以后可能更新”、代码行数和改动大小都不能单独触发升级。
 
+## 包内 PVS 治理内核
+
+本包只暴露根目录 `SKILL.md` 一个 Skill。PVS 治理入口为 `core/project-vibe-spec/PVS.md`，各 LEVEL 的加载范围由 `references/project-vibe-spec-bridge.md` 定义。PVS 负责项目协作契约，不重新定义本文的 LEVEL；运行时不需要外部 PVS 安装或网络下载。
+
 ## LEVEL 1：快速验证与轻量交付
 
 ### 适用范围

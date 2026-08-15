@@ -28,6 +28,18 @@ version_file="$package_root/VERSION"
 [[ -f "$version_file" ]] || { echo "错误：找不到 VERSION，当前目录不是完整的 project-level-workflow 包。" >&2; exit 1; }
 version="$(tr -d '\r\n' < "$version_file")"
 
+if command -v python3 >/dev/null 2>&1; then
+  python_cmd="$(command -v python3)"
+elif command -v python >/dev/null 2>&1; then
+  python_cmd="$(command -v python)"
+else
+  echo "错误：安装前包校验需要 Python 3.10+。" >&2
+  exit 1
+fi
+"$python_cmd" "$package_root/scripts/workflow.py" validate-package --package-root "$package_root"
+pvs_files="$(find "$package_root/core/project-vibe-spec" -type f | wc -l | tr -d ' ')"
+echo "PVS 内核：$pvs_files 个文件"
+
 if [[ "$scope" == "project" ]]; then
   [[ -d "$project_path" ]] || { echo "错误：项目目录不存在：$project_path" >&2; exit 1; }
   base="$(CDPATH= cd -- "$project_path" && pwd -P)"
@@ -48,6 +60,11 @@ case "$target" in
   */project-level-workflow) ;;
   *) echo "错误：拒绝操作非托管目标：$target" >&2; exit 1 ;;
 esac
+
+independent_pvs="$(dirname -- "$target")/project-vibe-spec"
+if [[ -e "$independent_pvs" ]]; then
+  echo "提示：检测到独立 project-vibe-spec：$independent_pvs；本安装不处理该目录。"
+fi
 
 installed_version_file="$target/VERSION"
 if [[ "$mode" == "update" && ! -f "$installed_version_file" ]]; then
@@ -76,15 +93,28 @@ if [[ "$dry_run" == "true" ]]; then
 fi
 
 mkdir -p -- "$(dirname -- "$target")"
-[[ -z "$backup" ]] || mv -- "$target" "$backup"
-mkdir -p -- "$target"
+staging="$target.installing-$$"
+[[ ! -e "$staging" ]] || { echo "错误：安装暂存目录已存在：$staging" >&2; exit 1; }
+cleanup_install() {
+  if [[ -e "$staging" ]]; then
+    rm -rf -- "$staging"
+  fi
+  if [[ ! -e "$target" && -n "$backup" && -e "$backup" ]]; then
+    mv -- "$backup" "$target"
+  fi
+}
+trap cleanup_install EXIT
 
-items=(SKILL.md README.md LEVEL.md VERSION CHANGELOG.md LICENSE \
+mkdir -p -- "$staging"
+items=(SKILL.md README.md LEVEL.md VERSION CHANGELOG.md LICENSE core \
   references templates schemas scripts adapters evals)
 for item in "${items[@]}"; do
   [[ -e "$package_root/$item" ]] || continue
-  cp -R -- "$package_root/$item" "$target/"
+  cp -R -- "$package_root/$item" "$staging/"
 done
+[[ -z "$backup" ]] || mv -- "$target" "$backup"
+mv -- "$staging" "$target"
+trap - EXIT
 
 echo "完成：project-level-workflow $version 已安装到 $target"
 [[ -z "$backup" ]] || echo "原版本已保留在：$backup"

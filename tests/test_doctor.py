@@ -1,4 +1,5 @@
 import subprocess
+import shutil
 import sys
 import tempfile
 import unittest
@@ -31,6 +32,22 @@ class DoctorTests(unittest.TestCase):
             result = run_cli("doctor", "--package-root", temp)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("FAIL", result.stdout)
+
+    def test_doctor_warns_but_passes_for_independent_pvs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            package = parent / "project-level-workflow"
+            shutil.copytree(ROOT, package)
+            (parent / "project-vibe-spec").mkdir()
+            result = run_cli("doctor", "--package-root", str(package))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("WARN 独立 project-vibe-spec", result.stdout)
+
+    def test_doctor_reports_embedded_pvs(self):
+        result = run_cli("doctor", "--package-root", str(ROOT))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("PVS 包内内核", result.stdout)
+        self.assertIn("PVS 模板职责映射", result.stdout)
 
 
 if __name__ == "__main__":

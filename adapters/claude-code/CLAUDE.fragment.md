@@ -7,6 +7,8 @@
 - 机器状态：`.project-workflow/state.json`
 - 人类摘要：`docs/project-workflow/STATUS.md`
 - 状态校验：`python scripts/workflow.py validate --project .`
+- PVS 分层路由：`references/project-vibe-spec-bridge.md`
+- PVS 包内内核：`core/project-vibe-spec/PVS.md`
 
 恢复会话时先校验状态。按 `LEVEL.md` 对应章节推进当前最小任务，保留用户已有修改；到人工 Gate 后报告事实、证据、风险、方案和推荐决策，未经批准不继续。LEVEL 4 只做需求分析，不写代码、不改数据库、不部署、不做自动化实现。
 <!-- project-level-workflow:end -->

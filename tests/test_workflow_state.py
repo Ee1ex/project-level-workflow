@@ -100,6 +100,40 @@ class WorkflowStateTests(unittest.TestCase):
             ]:
                 self.assertIn(section, status)
 
+    def test_validate_does_not_mutate_older_workflow_version(self):
+        with tempfile.TemporaryDirectory() as temp:
+            self.assertEqual(run_cli("init", "--project", temp, "--level", "1").returncode, 0)
+            state_path = Path(temp) / ".project-workflow" / "state.json"
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            state["workflow_version"] = "0.3.0"
+            state_path.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+            before = state_path.read_bytes()
+            result = run_cli("validate", "--project", temp)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(state_path.read_bytes(), before)
+
+    def test_status_refreshes_workflow_version_with_backup_and_history(self):
+        with tempfile.TemporaryDirectory() as temp:
+            self.assertEqual(run_cli("init", "--project", temp, "--level", "2").returncode, 0)
+            project = Path(temp)
+            state_path = project / ".project-workflow" / "state.json"
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            state["workflow_version"] = "0.3.0"
+            state_path.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+            result = run_cli("status", "--project", temp)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            current = json.loads(state_path.read_text(encoding="utf-8"))
+            backup = json.loads(
+                (project / ".project-workflow" / "state.backup.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(current["workflow_version"], "0.4.0")
+            self.assertEqual(backup["workflow_version"], "0.3.0")
+            event = next(
+                item for item in current["history"] if item.get("event") == "workflow_version_updated"
+            )
+            self.assertEqual(event["from_version"], "0.3.0")
+            self.assertEqual(event["to_version"], "0.4.0")
+
     def test_transition_requires_matching_gate_and_approval(self):
         with tempfile.TemporaryDirectory() as temp:
             project = Path(temp)

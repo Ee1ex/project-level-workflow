@@ -1,5 +1,5 @@
 {
-  "version": "0.3.0",
+  "version": "0.4.0",
   "language": "zh-CN",
   "cases": [
     {
@@ -97,6 +97,24 @@
       "prompt": "这个目录还不是 Git 仓库，按 LEVEL 3 推进并自动提交。",
       "expected_output": {"trigger": true, "level": 3, "git_init": "requires_gate", "remote_write": false},
       "files": ["references/git-and-draft-pr.md", "references/risk-and-permissions.md"]
+    },
+    {
+      "id": "level2-bundled-pvs",
+      "prompt": "我要开发有登录、云端数据和持续运营责任的自有产品，请按 LEVEL 2 完整 PVS 推进；不要让我再安装其他 Skill。",
+      "expected_output": {"trigger": true, "level": 2, "pvs_source": "bundled", "external_install": false},
+      "files": ["SKILL.md", "references/project-vibe-spec-bridge.md", "core/project-vibe-spec/PVS.md"]
+    },
+    {
+      "id": "single-skill-offline",
+      "prompt": "断网环境只安装 project-level-workflow 后，帮我初始化一个 LEVEL 2 项目。",
+      "expected_output": {"trigger": true, "level": 2, "single_skill": true, "network_required": false},
+      "files": ["README.md", "core/project-vibe-spec/PVS.md", "templates/template-map.json"]
+    },
+    {
+      "id": "independent-pvs-not-required",
+      "prompt": "我没有单独安装 project-vibe-spec，是否还能按完整流程开发长期运营产品？",
+      "expected_output": {"trigger": true, "level": 2, "pvs_source": "bundled", "external_install": false},
+      "files": ["SKILL.md", "references/project-vibe-spec-bridge.md"]
     }
   ]
 }

@@ -45,6 +45,8 @@ if ((Split-Path -Leaf $target) -ne 'project-level-workflow') {
 
 Write-Host "将卸载 project-level-workflow：$target"
 Write-Host '托管目录包含统一 LEVEL.md；只删除该托管目录。'
+Write-Host '托管目录中的 PVS 包内内核将随 project-level-workflow 一起移除。'
+Write-Host '独立 project-vibe-spec 不属于本包托管范围，本卸载器不处理。'
 Write-Host '项目状态 .project-workflow 与 docs/project-workflow 将保留。'
 if (-not (Test-Path -LiteralPath $target)) {
     Write-Host '未发现安装目录，无需处理。'

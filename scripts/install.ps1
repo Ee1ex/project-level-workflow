@@ -68,7 +68,7 @@ function Copy-Package {
 
     $items = @(
     'SKILL.md', 'README.md', 'LEVEL.md', 'VERSION', 'CHANGELOG.md', 'LICENSE',
-        'references', 'templates', 'schemas', 'scripts', 'adapters', 'evals'
+        'core', 'references', 'templates', 'schemas', 'scripts', 'adapters', 'evals'
     )
     New-Item -ItemType Directory -Path $TargetPath -Force | Out-Null
     foreach ($item in $items) {
@@ -85,8 +85,28 @@ if (-not (Test-Path -LiteralPath $versionPath -PathType Leaf)) {
     throw "错误：找不到 VERSION，当前目录不是完整的 project-level-workflow 包。"
 }
 $version = (Get-Content -LiteralPath $versionPath -Raw -Encoding UTF8).Trim()
+$workflow = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot 'workflow.py'))
+$pythonCommand = Get-Command python -ErrorAction SilentlyContinue
+if (-not $pythonCommand) {
+    $pythonCommand = Get-Command python3 -ErrorAction SilentlyContinue
+}
+if (-not $pythonCommand -or -not (Test-Path -LiteralPath $workflow -PathType Leaf)) {
+    throw "错误：安装前包校验需要 Python 3.10+ 和 scripts/workflow.py。"
+}
+& $pythonCommand.Source $workflow validate-package --package-root $packageRoot
+if ($LASTEXITCODE -ne 0) {
+    throw "错误：project-level-workflow 包校验未通过，已停止安装。"
+}
+
+$pvsRoot = Join-Path $packageRoot 'core/project-vibe-spec'
+$pvsFiles = @(Get-ChildItem -LiteralPath $pvsRoot -Recurse -File)
+Write-Host "PVS 内核：$($pvsFiles.Count) 个文件"
 $target = Resolve-InstallTarget -SelectedPlatform $Platform -SelectedScope $Scope -SelectedProject $ProjectPath
 Assert-SafeTarget -TargetPath $target
+$independentPvs = Join-Path (Split-Path -Parent $target) 'project-vibe-spec'
+if (Test-Path -LiteralPath $independentPvs) {
+    Write-Host "提示：检测到独立 project-vibe-spec：$independentPvs；本安装不处理该目录。"
+}
 
 $installedVersionPath = Join-Path $target 'VERSION'
 if ($Mode -eq 'update' -and -not (Test-Path -LiteralPath $installedVersionPath -PathType Leaf)) {
@@ -123,13 +143,21 @@ if ($DryRun) {
 
 $parent = Split-Path -Parent $target
 New-Item -ItemType Directory -Path $parent -Force | Out-Null
-if ($backup) {
-    Move-Item -LiteralPath $target -Destination $backup
+$staging = "$target.installing-$PID"
+if (Test-Path -LiteralPath $staging) {
+    throw "错误：安装暂存目录已存在：$staging"
 }
 
 try {
-    Copy-Package -SourceRoot $packageRoot -TargetPath $target
+    Copy-Package -SourceRoot $packageRoot -TargetPath $staging
+    if ($backup) {
+        Move-Item -LiteralPath $target -Destination $backup
+    }
+    Move-Item -LiteralPath $staging -Destination $target
 } catch {
+    if ((Test-Path -LiteralPath $staging) -and (Split-Path -Leaf $staging) -eq "project-level-workflow.installing-$PID") {
+        Remove-Item -LiteralPath $staging -Recurse -Force
+    }
     if ((-not (Test-Path -LiteralPath $target)) -and $backup -and (Test-Path -LiteralPath $backup)) {
         Move-Item -LiteralPath $backup -Destination $target
     }
