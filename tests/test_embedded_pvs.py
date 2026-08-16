@@ -61,6 +61,21 @@ class EmbeddedPvsTests(unittest.TestCase):
             for compatibility in entry.get("compatibility", []):
                 self.assertTrue((ROOT / compatibility).is_file(), compatibility)
 
+    def test_template_map_includes_personal_memory_roles(self) -> None:
+        data = json.loads(
+            (ROOT / "templates" / "template-map.json").read_text(encoding="utf-8")
+        )
+        roles = {entry["name"]: entry for entry in data["roles"]}
+        expected = {
+            "project_architecture": "templates/level1/architecture.md",
+            "change_record": "templates/common/change-record.md",
+            "release_record": "templates/common/release-record.md",
+            "level1_progress_record": "templates/level1/progress-record.md",
+        }
+        for name, default in expected.items():
+            self.assertIn(name, roles)
+            self.assertEqual(roles[name]["default"], default)
+
 
 if __name__ == "__main__":
     unittest.main()

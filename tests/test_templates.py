@@ -9,8 +9,12 @@ TEMPLATES = [
     "templates/common/status.md",
     "templates/common/gate-report.md",
     "templates/common/acceptance-report.md",
+    "templates/common/change-record.md",
+    "templates/common/release-record.md",
     "templates/level1/project-brief.md",
+    "templates/level1/architecture.md",
     "templates/level1/pending-verification.md",
+    "templates/level1/progress-record.md",
     "templates/level2/project-map.md",
     "templates/level2/change-proposal.md",
     "templates/level2/requirements.md",
@@ -55,6 +59,30 @@ class TemplateTests(unittest.TestCase):
             "templates/common/gate-report.md": ["已确认事实", "验证证据", "风险", "推荐决策", "等待批准"],
         }
         for relative, sections in required_sections.items():
+            text = (ROOT / relative).read_text(encoding="utf-8")
+            for section in sections:
+                self.assertIn(section, text, f"{relative}: {section}")
+
+    def test_personal_project_memory_templates_cover_handoff_and_history(self):
+        required = {
+            "templates/level1/architecture.md": ["模块", "调用关系", "数据", "构建与交付"],
+            "templates/level1/progress-record.md": [
+                "目标",
+                "涉及文件",
+                "行为变化",
+                "验证",
+                "兼容影响",
+            ],
+            "templates/common/change-record.md": ["范围", "不做", "旧行为", "新行为", "验证"],
+            "templates/common/release-record.md": [
+                "版本",
+                "提交",
+                "变更",
+                "验证",
+                "已知限制",
+            ],
+        }
+        for relative, sections in required.items():
             text = (ROOT / relative).read_text(encoding="utf-8")
             for section in sections:
                 self.assertIn(section, text, f"{relative}: {section}")
