@@ -10,6 +10,7 @@
 - 使用前检查安装、登录、授权、目标环境、费用、数据去向和退出方式。
 - 外部写入、生产操作、数据库变更和公开发布遵守风险与人工 Gate。
 - 工具不可用时使用通用文档、CLI 或人工流程，并记录未执行项。
+- LEVEL 4 十节点使用 `references/level4-capability-routing.md`：外部专业能力只路由、不内嵌。
 
 ## 产品与设计
 
@@ -25,9 +26,10 @@
 
 ## GitHub
 
-- 可用于读取仓库、Issue、PR、Review 和 CI。
-- 远程写入受 `allow_push_own_branch` 与 `allow_create_draft_pr` 控制。
-- Merge、Release、分支删除和公开评论始终保留人工 Gate。
+- 所有 LEVEL 的远程交付读取 `references/github-plugin-routing.md`，自动选择 Codex GitHub 插件。
+- 插件先只读核对仓库、身份、分支、PR、Tag 和 Release；本地范围配置不替代远程动作时确认。
+- push、Draft PR、Merge、Tag 和 Release 先合并为一次动作计划，明确确认后执行并远端回读验证。
+- 插件不可用时说明安装或连接要求，不静默切换到不受治理的远程写入方式。
 
 ## Windows 命令
 

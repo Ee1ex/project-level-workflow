@@ -14,6 +14,8 @@ alwaysApply: false
 - 状态校验：`python scripts/workflow.py validate --project .`
 - PVS 分层路由：`references/project-vibe-spec-bridge.md`
 - PVS 包内内核：`core/project-vibe-spec/PVS.md`
+- 双层文档契约：`references/documentation-contract.md`
+- 外部能力边界：LEVEL 4 专业能力只路由、不内嵌，安装仍需确认
 
-当用户要求按标准流程开发、继续项目或推进到 Gate 时应用本规则。先读取状态和 `LEVEL.md` 对应章节，只在已批准范围内执行 R1/R2；R3/R4、生产、公开发布和高影响 Git 操作必须等待人工批准。LEVEL 4 只做需求分析，不写代码、不改数据库、不部署、不做自动化实现。不要把完整等级流程复制进本规则。
+当用户要求按标准流程开发、继续项目或推进到 Gate 时应用本规则。先读取状态和 `LEVEL.md` 对应章节，按 `AUTO`、`CONFIRM`、`MANUAL_ONLY` 执行；生产、公开发布和高影响 Git 操作必须等待人工批准。LEVEL 4 先分析，负责人确认后可实施并路由外部能力。不要把完整等级流程复制进本规则。
 <!-- project-level-workflow:end -->

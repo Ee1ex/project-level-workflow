@@ -12,6 +12,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# 新包必须使用两段版本（X.X）；Doctor 与安装阶段 validate-package 会拒绝三段版本。
+
 $installer = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot 'install.ps1'))
 if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {
     throw "错误：找不到 project-level-workflow 安装器。"

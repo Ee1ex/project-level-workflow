@@ -47,7 +47,7 @@ class AdapterTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 0, result.stderr)
             text = target.read_text(encoding="utf-8")
             self.assertIn("保留此内容", text)
-            self.assertIn("LEVEL.md#level-2可持续运营项目", text)
+            self.assertIn("LEVEL.md#level-2完整-pvs-持续运营", text)
             self.assertEqual(text.count(START), 1)
             self.assertEqual(text.count(END), 1)
 
@@ -57,7 +57,7 @@ class AdapterTests(unittest.TestCase):
             result = run_cli("render-adapter", "--platform", "claude-code", "--project", temp)
             self.assertEqual(result.returncode, 0, result.stderr)
             text = (project / "CLAUDE.md").read_text(encoding="utf-8")
-            self.assertIn("LEVEL.md#level-1快速验证与轻量交付", text)
+            self.assertIn("LEVEL.md#level-1快速开发与完整项目记忆", text)
             self.assertIn(".project-workflow/state.json", text)
             self.assertEqual(text.count(START), 1)
 
@@ -73,14 +73,16 @@ class AdapterTests(unittest.TestCase):
             self.assertIn("description:", text)
             self.assertIn("LEVEL.md#level-3已有团队与开源项目改进", text)
 
-    def test_level_four_adapter_explains_analysis_only_boundary(self):
+    def test_level_four_adapter_explains_confirmed_execution_and_external_routing(self):
         with tempfile.TemporaryDirectory() as temp:
             project = self._initialized_project(temp, "4")
             result = run_cli("render-adapter", "--platform", "codex", "--project", temp)
             self.assertEqual(result.returncode, 0, result.stderr)
             text = (project / "AGENTS.md").read_text(encoding="utf-8")
-            self.assertIn("LEVEL.md#level-4复杂项目需求分析", text)
-            self.assertIn("只做需求分析", text)
+            self.assertIn("LEVEL.md#level-4复杂自动化参考与路由", text)
+            self.assertIn("负责人确认后可实施", text)
+            self.assertIn("外部能力", text)
+            self.assertNotIn("只做需求分析", text)
 
     def test_unknown_platform_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp:

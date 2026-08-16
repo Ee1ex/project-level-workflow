@@ -71,6 +71,30 @@ class LifecycleScriptTests(unittest.TestCase):
                 self.assertIn("PVS 内核", content)
                 self.assertIn("project-vibe-spec", content)
 
+    def test_install_and_update_enforce_two_part_package_contract(self) -> None:
+        for name in ("install.ps1", "install.sh", "update.ps1", "update.sh"):
+            with self.subTest(script=name):
+                content = self._read(name)
+                self.assertIn("两段版本（X.X）", content)
+                self.assertTrue("validate-package" in content or "doctor" in content)
+
+    def test_lifecycle_contract_mentions_new_routing_and_memory_files(self) -> None:
+        expected = (
+            "documentation-contract.md",
+            "personal-execution-loop.md",
+            "level4-capability-routing.md",
+            "github-plugin-routing.md",
+            "change-record.md",
+            "release-record.md",
+            "architecture.md",
+            "progress-record.md",
+        )
+        combined = "\n".join(
+            self._read(name) for name in ("install.ps1", "install.sh", "update.ps1", "update.sh")
+        )
+        for filename in expected:
+            self.assertIn(filename, combined)
+
     def test_uninstall_preserves_project_state_and_project_docs(self) -> None:
         for name in ("uninstall.ps1", "uninstall.sh"):
             with self.subTest(script=name):

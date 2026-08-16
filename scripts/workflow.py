@@ -17,9 +17,10 @@ from urllib.parse import unquote
 
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
-SCHEMA_VERSION = "1.1.0"
-LEGACY_SCHEMA_VERSIONS = {"0.9.0", "1.0.0"}
-SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
+SCHEMA_VERSION = "2.0"
+LEGACY_SCHEMA_VERSIONS = {"0.9.0", "1.0.0", "1.1.0"}
+TWO_PART_VERSION = re.compile(r"^\d+\.\d+$")
+LEGACY_THREE_PART_VERSION = re.compile(r"^\d+\.\d+\.\d+$")
 REQUIRED_FIELDS = (
     "schema_version",
     "workflow_version",
@@ -29,6 +30,7 @@ REQUIRED_FIELDS = (
     "gate",
     "status",
     "risk",
+    "execution_policy",
     "permissions",
     "current_task",
     "artifacts",
@@ -55,10 +57,10 @@ EXTERNAL_PVS_INSTALL = re.compile(
     re.IGNORECASE,
 )
 LEVEL_REFERENCES = {
-    1: "LEVEL.md#level-1快速验证与轻量交付",
-    2: "LEVEL.md#level-2可持续运营项目",
+    1: "LEVEL.md#level-1快速开发与完整项目记忆",
+    2: "LEVEL.md#level-2完整-pvs-持续运营",
     3: "LEVEL.md#level-3已有团队与开源项目改进",
-    4: "LEVEL.md#level-4复杂项目需求分析",
+    4: "LEVEL.md#level-4复杂自动化参考与路由",
 }
 LEGACY_LEVEL_MIGRATION = {
     1: 1,
@@ -66,11 +68,18 @@ LEGACY_LEVEL_MIGRATION = {
     3: 4,
 }
 LEVEL_MODES = {
-    1: "PVS-Lite：保留规则、文档地图、Brief、状态和待验证事项；快速实现，集中做核心路径冒烟。",
-    2: "完整 PVS：维护需求、设计、数据、决策、进度、验证、发布、回滚和运营责任；测试按风险与里程碑集中安排。",
-    3: "已有/开源改进：保留项目地图、权限与贡献规则、修改前基线、问题复现、受影响回归、CI、Review、PR 和交接。",
-    4: "只做需求分析：输出范围、MVP、方案比较、风险、验收和待确认事项；不写代码、不改数据库、不部署、不做自动化实现。",
+    1: "快速开发与完整记忆：稳定认知 + Ledger/小记录，执行—运行—观察—调整。",
+    2: "完整 PVS：Phase 0 → Phase N、范围冻结和 DoD；普通 Phase 自动推进。",
+    3: "已有仓库改进：复用 Issue、PR、CHANGELOG、ADR，保留 Change Record、基线、回归与交接。",
+    4: "复杂自动化参考：先分析，负责人确认后可实施；专业能力只做外部路由。",
 }
+INITIAL_STAGE = {
+    1: "project-memory",
+    2: "phase-0",
+    3: "repository-intake",
+    4: "requirements-analysis",
+}
+DEFAULT_EXECUTION_POLICY = {1: "AUTO", 2: "AUTO", 3: "AUTO", 4: "CONFIRM"}
 
 
 def configure_utf8_output() -> None:
@@ -89,8 +98,8 @@ def load_version() -> str:
     if not version_path.is_file():
         raise ValueError("缺少 VERSION 文件")
     version = version_path.read_text(encoding="utf-8").strip()
-    if not SEMVER.fullmatch(version):
-        raise ValueError(f"VERSION 不是合法 SemVer：{version}")
+    if not TWO_PART_VERSION.fullmatch(version):
+        raise ValueError(f"VERSION 必须是两段版本（X.X）：{version}")
     return version
 
 
@@ -120,10 +129,11 @@ def build_initial_state(project: Path, level: int) -> dict[str, Any]:
         "workflow_version": load_version(),
         "project_id": f"{project_name}-{digest}",
         "level": level,
-        "stage": "initialization",
-        "gate": "level-confirmed",
+        "stage": INITIAL_STAGE[level],
+        "gate": None,
         "status": "in_progress",
         "risk": "R1",
+        "execution_policy": DEFAULT_EXECUTION_POLICY[level],
         "permissions": {
             "allow_push_own_branch": False,
             "allow_create_draft_pr": False,
@@ -145,7 +155,7 @@ def build_initial_state(project: Path, level: int) -> dict[str, Any]:
         "history": [
             {
                 "event": "workflow_initialized",
-                "stage": "initialization",
+                "stage": INITIAL_STAGE[level],
                 "at": now,
             }
         ],
@@ -202,14 +212,18 @@ def validate_state(data: dict[str, Any], project: Path) -> list[str]:
 
     if data.get("schema_version") != SCHEMA_VERSION:
         errors.append(f"不支持的 schema_version：{data.get('schema_version')}")
-    if not isinstance(data.get("workflow_version"), str) or not SEMVER.fullmatch(
-        data.get("workflow_version", "")
+    workflow_version = data.get("workflow_version")
+    if not isinstance(workflow_version, str) or not (
+        TWO_PART_VERSION.fullmatch(workflow_version)
+        or LEGACY_THREE_PART_VERSION.fullmatch(workflow_version)
     ):
-        errors.append("workflow_version 必须是 SemVer")
+        errors.append("workflow_version 必须是两段版本或兼容的历史三段版本")
     if data.get("level") not in (1, 2, 3, 4):
         errors.append("level 只允许 1、2、3 或 4")
     if data.get("risk") not in ("R1", "R2", "R3", "R4"):
         errors.append("risk 只允许 R1、R2、R3 或 R4")
+    if data.get("execution_policy") not in ("AUTO", "CONFIRM", "MANUAL_ONLY"):
+        errors.append("execution_policy 只允许 AUTO、CONFIRM 或 MANUAL_ONLY")
     if data.get("status") not in ("in_progress", "waiting_approval", "completed", "blocked"):
         errors.append("status 值无效")
 
@@ -238,45 +252,7 @@ def validate_state(data: dict[str, Any], project: Path) -> list[str]:
 
 
 def _initial_status(state: dict[str, Any]) -> str:
-    return f"""# 项目流程状态
-
-- 状态：进行中
-- 负责人：待项目负责人确认
-- 关联 Gate：{state['gate']}
-- 最后更新时间：{state['updated_at']}
-
-## 当前 LEVEL、阶段与任务
-
-LEVEL {state['level']} / {state['stage']} / 尚未创建任务。
-
-## 本轮目标与不做范围
-
-初始化项目流程；尚未批准的实现不在本轮范围。
-
-## 已完成内容
-
-- 创建项目状态和目录。
-
-## 验证命令与结果摘要
-
-- 状态初始化校验通过。
-
-## 当前风险与未决事项
-
-- 需要按 `LEVEL.md` 中对应等级创建最小文档包。
-
-## 当前人工 Gate
-
-LEVEL 已确认，等待初始化文档和首个任务。
-
-## 最近等级迁移
-
-- 无等级迁移记录。
-
-## 推荐选择与下一步
-
-读取 `{LEVEL_REFERENCES[state['level']]}`，创建对应文档并定义首个可验收任务。
-"""
+    return render_status(state)
 
 
 def _format_items(items: list[Any], empty_message: str) -> str:
@@ -298,7 +274,8 @@ def _migration_status(state: dict[str, Any]) -> str:
         event
         for event in history
         if isinstance(event, dict)
-        and event.get("event") in {"level_migrated", "level_reconfirmed"}
+        and event.get("event")
+        in {"level_migrated", "level_reconfirmed", "workflow_schema_migrated"}
     ]
     if not migrations:
         return "- 无等级迁移记录。"
@@ -316,7 +293,11 @@ def _migration_status(state: dict[str, Any]) -> str:
             f"- 迁移版本：Schema {from_schema} → {to_schema}",
             f"- 迁移原因：{reason}",
             f"- 用户重确认：{confirmation}",
-            "- 迁移后的 Gate 未自动批准；需要通过 `level-migration-review` 后继续。",
+            (
+                f"- 迁移后的 Gate 未自动批准：`{state['gate']}`。"
+                if state.get("gate")
+                else "- 本次迁移未新增人工 Gate。"
+            ),
         ]
     )
 
@@ -326,14 +307,43 @@ def render_status(data: dict[str, Any]) -> str:
     task_summary = task.get("summary") or task.get("title") or "尚未创建任务"
     scope = task.get("scope") or "当前任务范围尚未写入状态。"
     exclusions = task.get("out_of_scope") or "未记录额外排除项。"
-    gate = data.get("gate") or "当前没有等待批准的 Gate。"
+    gate = data.get("gate")
     artifacts = _format_items(data.get("artifacts", []), "尚无已记录产物。")
     verifications = _format_items(data.get("verifications", []), "尚无已记录验证。")
+    level_four = data["level"] == 4
+    open_questions = task.get("open_questions")
+    show_risk = (
+        level_four
+        or data["risk"] in {"R3", "R4"}
+        or data["execution_policy"] != "AUTO"
+        or bool(open_questions)
+    )
+    risk_section = ""
+    if show_risk:
+        risk_section = f"""
+## 当前风险与未决事项
+
+- 风险等级：{data['risk']}
+- 未决事项：{open_questions or '无已记录未决事项。'}
+"""
+    gate_section = ""
+    if level_four or gate:
+        gate_section = f"""
+## 当前人工 Gate
+
+{gate or '当前没有等待批准的 Gate。'}
+"""
+    gate_metadata = (
+        f"- 关联 Gate：{gate}\n"
+        if gate
+        else ("- 关联 Gate：当前没有等待批准的 Gate。\n" if level_four else "")
+    )
     return f"""# 项目流程状态
 
 - 状态：{data['status']}
 - 负责人：{task.get('owner') or '待项目负责人确认'}
-- 关联 Gate：{gate}
+- 执行策略：{data['execution_policy']}
+{gate_metadata.rstrip()}
 - 最后更新时间：{data['updated_at']}
 
 ## 当前 LEVEL、阶段与任务
@@ -352,15 +362,7 @@ LEVEL {data['level']} / {data['stage']} / {task_summary}
 ## 验证命令与结果摘要
 
 {verifications}
-
-## 当前风险与未决事项
-
-- 风险等级：{data['risk']}
-- 未决事项：{task.get('open_questions') or '无已记录未决事项。'}
-
-## 当前人工 Gate
-
-{gate}
+{risk_section}{gate_section}
 
 ## 最近等级迁移
 
@@ -497,6 +499,9 @@ def command_transition(args: argparse.Namespace) -> int:
     state["stage"] = args.to_stage
     state["gate"] = args.next_gate
     state["status"] = "waiting_approval" if args.next_gate else "in_progress"
+    state["execution_policy"] = (
+        "CONFIRM" if args.next_gate else DEFAULT_EXECUTION_POLICY[state["level"]]
+    )
     state["updated_at"] = now
     state["history"].append(
         {
@@ -539,14 +544,25 @@ def command_migrate(args: argparse.Namespace) -> int:
         return 1
 
     old_level = state.get("level")
-    if old_level not in LEGACY_LEVEL_MIGRATION:
+    if source_version == "1.1.0":
+        if old_level not in (1, 2, 3, 4):
+            print("0.4.0 状态的 level 必须是 LEVEL 1、2、3 或 4", file=sys.stderr)
+            return 1
+    elif old_level not in LEGACY_LEVEL_MIGRATION:
         print("旧状态的 level 必须是旧 LEVEL 1、2 或 3", file=sys.stderr)
         return 1
 
     explicit_target = getattr(args, "target_level", None)
     approved_by = (getattr(args, "approved_by", None) or "").strip()
     reason = (getattr(args, "reason", None) or "").strip()
-    if explicit_target is not None:
+    if source_version == "1.1.0":
+        if explicit_target is not None or approved_by or reason:
+            print("0.4.0 状态迁移保持现有 LEVEL，不接受旧等级重映射参数", file=sys.stderr)
+            return 2
+        new_level = old_level
+        migration_event_name = "workflow_schema_migrated"
+        migration_reason = "从 0.4.0 状态协议迁移；保留已确认的 LEVEL 1–4 语义。"
+    elif explicit_target is not None:
         if explicit_target != 2 or old_level != 3:
             print(
                 "只有旧 LEVEL 3 可以通过显式重确认改为新 LEVEL 2",
@@ -575,8 +591,15 @@ def command_migrate(args: argparse.Namespace) -> int:
     state["schema_version"] = SCHEMA_VERSION
     state["workflow_version"] = load_version()
     state["level"] = new_level
-    state["gate"] = "level-migration-review"
-    state["status"] = "waiting_approval"
+    if source_version == "1.1.0" and old_level == 4:
+        state["gate"] = "level4-execution-review"
+        state["status"] = "waiting_approval"
+    elif source_version != "1.1.0":
+        state["gate"] = "level-migration-review"
+        state["status"] = "waiting_approval"
+    state["execution_policy"] = (
+        "CONFIRM" if state.get("gate") else DEFAULT_EXECUTION_POLICY[new_level]
+    )
     state.setdefault(
         "permissions",
         {
@@ -604,10 +627,14 @@ def command_migrate(args: argparse.Namespace) -> int:
     atomic_write_json(backup_path, previous)
     atomic_write_json(state_path, state)
     atomic_write_text(status_path, render_status(state))
+    gate_summary = (
+        f"Gate {state['gate']} 等待人工确认"
+        if state.get("gate")
+        else "未新增人工 Gate"
+    )
     print(
         f"已从 Schema {source_version} 迁移到 {SCHEMA_VERSION}；"
-        f"旧 LEVEL {old_level} → 新 LEVEL {new_level}；"
-        "迁移后的 Gate 等待人工确认"
+        f"旧 LEVEL {old_level} → 新 LEVEL {new_level}；{gate_summary}"
     )
     return 0
 
@@ -629,6 +656,10 @@ def command_doctor(args: argparse.Namespace) -> int:
         "references/tool-routing.md",
         "references/platform-compatibility.md",
         "references/project-vibe-spec-bridge.md",
+        "references/documentation-contract.md",
+        "references/personal-execution-loop.md",
+        "references/level4-capability-routing.md",
+        "references/github-plugin-routing.md",
         "adapters/codex/AGENTS.fragment.md",
         "adapters/claude-code/CLAUDE.fragment.md",
         "adapters/cursor/project-level-workflow.mdc",
@@ -882,6 +913,7 @@ def evaluate_git_action(
         "delete_remote_branch",
         "ready_pr",
         "merge",
+        "tag",
         "release",
     }
     if action not in supported:
@@ -894,15 +926,18 @@ def evaluate_git_action(
     }
     reasons: list[str] = decision["reasons"]
 
+    if action in {"force_push", "rewrite_history"}:
+        reasons.append("禁止 Force Push 或改写公共历史；任何 Gate 都不能覆盖。")
+        return decision
     if action in {
-        "force_push",
-        "rewrite_history",
         "delete_remote_branch",
         "ready_pr",
         "merge",
+        "tag",
         "release",
     }:
-        reasons.append("禁止自动执行高影响远端动作；人工 Gate 不能把它变成无人值守动作。")
+        decision["requires_gate"] = True
+        reasons.append("必须进入 GitHub 插件远程动作计划，并在执行前取得明确确认。")
         return decision
     if action == "git_init":
         decision["requires_gate"] = True
@@ -956,7 +991,10 @@ def evaluate_git_action(
     if action == "create_draft_pr" and not permissions.get("allow_create_draft_pr"):
         reasons.append("permissions.allow_create_draft_pr=false。")
 
-    decision["allowed"] = not reasons
+    if reasons:
+        return decision
+    decision["requires_gate"] = True
+    reasons.append("远程写入必须进入 GitHub 插件动作计划并取得执行前明确确认。")
     return decision
 
 
@@ -1103,6 +1141,7 @@ def validate_package(root: Path) -> list[str]:
         LEVEL_DOCUMENT,
         "schemas/workflow-state.schema.json",
         "evals/evals.json",
+        "docs/release/1.0-readiness.md",
         "core/project-vibe-spec/PVS.md",
         "core/project-vibe-spec/SOURCE.md",
         "core/project-vibe-spec/references/decision-gates.md",
@@ -1115,6 +1154,10 @@ def validate_package(root: Path) -> list[str]:
         "references/platform-compatibility.md",
         "references/git-and-draft-pr.md",
         "references/project-vibe-spec-bridge.md",
+        "references/documentation-contract.md",
+        "references/personal-execution-loop.md",
+        "references/level4-capability-routing.md",
+        "references/github-plugin-routing.md",
         "adapters/codex/AGENTS.fragment.md",
         "adapters/claude-code/CLAUDE.fragment.md",
         "adapters/cursor/project-level-workflow.mdc",
@@ -1140,8 +1183,8 @@ def validate_package(root: Path) -> list[str]:
         evals = json.loads((root / "evals" / "evals.json").read_text(encoding="utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError, OSError) as exc:
         return [f"公共合同无法读取：{exc}"]
-    if not SEMVER.fullmatch(version):
-        errors.append("VERSION 不是合法 SemVer")
+    if not TWO_PART_VERSION.fullmatch(version):
+        errors.append("VERSION 必须是两段版本（X.X）")
     if schema.get("properties", {}).get("workflow_version", {}).get("const") != version:
         errors.append("Schema workflow_version 与 VERSION 不一致")
     if schema.get("properties", {}).get("level", {}).get("enum") != [1, 2, 3, 4]:

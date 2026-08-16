@@ -1,12 +1,12 @@
 ---
 name: project-level-workflow
-description: 当用户要开发新项目、改进已有或开源项目、建设长期运营产品、分析复杂项目需求、判断项目 LEVEL，或按标准流程推进到人工 Gate 时使用。支持 LEVEL 1–4，并按 PVS-Lite、完整 PVS、已有项目回归和需求分析分层保存证据。
+description: 当用户要开发个人项目、持续运营产品、改进已有或开源仓库、分析复杂自动化需求、判断 LEVEL，或按可恢复流程推进到交付时使用。支持 LEVEL 1–4、双层项目记忆、低重复审批和外部能力路由。
 compatibility: Codex、Claude Code、Cursor；核心脚本需要 Python 3.10+，安装器支持 PowerShell 或 POSIX Shell。
 ---
 
 # Project Level Workflow
 
-把项目推进变成可恢复、可验证、按责任模式和风险授权的流程。LEVEL 表示项目责任模式，R1–R4 表示当前动作风险；低等级不代表可以跳过高风险操作前的检查。
+把项目推进变成可恢复、可验证、个人开发优先的流程。LEVEL 表示责任模式；LEVEL 1–3 对用户只展示 `AUTO`、`CONFIRM`、`MANUAL_ONLY`，R1–R4 仅作为兼容状态和内部依据。
 
 ## 触发检查
 
@@ -36,7 +36,7 @@ compatibility: Codex、Claude Code、Cursor；核心脚本需要 Python 3.10+，
 4. 验证通过后读取 `docs/project-workflow/STATUS.md` 和当前任务；状态与聊天、代码或项目规则冲突时展示差异并询问。
 5. 状态不存在时进入 LEVEL 推荐，不直接创建大量文档或修改实现。
 
-状态协议见 `references/state-protocol.md`；PVS 分层见 `references/project-vibe-spec-bridge.md`；外部能力路由见 `references/tool-routing.md`。
+状态协议见 `references/state-protocol.md`；双层文档见 `references/documentation-contract.md`；个人连续执行见 `references/personal-execution-loop.md`；PVS 分层见 `references/project-vibe-spec-bridge.md`；LEVEL 4 能力路由见 `references/level4-capability-routing.md`；GitHub 交付见 `references/github-plugin-routing.md`；通用工具路由见 `references/tool-routing.md`。
 
 包内 PVS 治理入口为 `core/project-vibe-spec/PVS.md`。按 Bridge 只加载当前 LEVEL 需要的章节和模板；不得要求用户另行安装、查找或下载 `project-vibe-spec`。包内入口缺失时按包损坏停止，不回退到个人 Skills 目录中的独立副本。
 
@@ -47,7 +47,7 @@ compatibility: Codex、Claude Code、Cursor；核心脚本需要 Python 3.10+，
 1. 他人、团队、公司或开源仓库的参与/改进 → LEVEL 3。
 2. 自有、线上、需要持续运营并承担用户/数据/服务责任 → LEVEL 2。
 3. 离线、静态或可下载交付，重新打包即可更新 → LEVEL 1。
-4. 大型、多系统、复杂自动化或完整运营自动化 → LEVEL 4，当前只做需求分析。
+4. 大型、多系统、复杂自动化或完整运营自动化 → LEVEL 4，先分析，负责人确认后可实施。
 
 输出：
 
@@ -69,16 +69,22 @@ python scripts/workflow.py init --project <项目根目录> --level <1|2|3|4>
 
 `init` 只写入 `.project-workflow/state.json`、`state.backup.json` 和 `docs/project-workflow/STATUS.md`，不未经确认生成大量项目文档。
 
-- LEVEL 1：PVS-Lite 的 Project Brief、规则、文档地图、状态和 `pending-verification.md`；跨模块或高风险时再增加 REQ/决策。
-- LEVEL 2：完整 PVS 的项目地图、PDD/PRD、Requirements/REQ、决策、业务流、UI/技术/API/数据、部署/运营、进度、待验证和交付文档。
-- LEVEL 3：已有仓库项目地图、贡献/权限记录、变更提案、基线、问题复现、影响分析、回归、Review、PR 和交接记录。
-- LEVEL 4：需求分析、范围、不做清单、MVP、方案比较、风险、验收和待确认事项；不创建代码实现文档，不自动拆开发任务。
+- LEVEL 1：规则、文档地图、Project Brief、架构、Requirements/Decisions/Progress Ledger、轻量 Change Record、状态和待验证记录。
+- LEVEL 2：完整 PVS 的 AGENTS、DOCUMENT_MAP、PDD/PRD、Requirements、Decisions、Progress、业务流、UI、架构、API、数据、权限、部署、监控、备份、回滚、运营、Bug 和版本记录。
+- LEVEL 3：优先复用 Issue、PR、CHANGELOG、ADR 和仓库文档，只补项目地图、Change Record、受影响基线、回归、PR 和交接。
+- LEVEL 4：先建立需求分析和方案，负责人确认实现后按十节点参考和外部能力路由推进。
 
 模板位于 `templates/`；已有项目目录和事实文档优先，不能创建平行事实源。
 
-## 第四步：按风险选择任务
+## 第四步：选择执行策略与硬边界
 
-读取 `references/risk-and-permissions.md`，记录目标、范围、不做、允许/禁止修改、验收标准、验证命令、风险等级和人工 Gate。未运行的检查写入 `pending-verification.md` 或状态的未决事项，不得标记为通过。
+读取 `references/personal-execution-loop.md` 和 `references/risk-and-permissions.md`，记录目标、范围、不做、允许/禁止修改、验收标准、验证命令和执行策略。未运行的检查写入待验证记录，不得标记为通过。
+
+- `AUTO`：已确认范围内连续执行。
+- `CONFIRM`：缺少用户决策或即将产生高影响。
+- `MANUAL_ONLY`：Agent 只准备，不执行。
+
+内部 R1–R4 为旧状态兼容保留，不要求 LEVEL 1–3 普通任务逐轮展示：
 
 - R1：文档、模板、只读分析、独立小测试；可执行并留证据。
 - R2：边界清晰的逻辑和内部 API；批准范围内执行，必须测试与 Review。
@@ -87,31 +93,31 @@ python scripts/workflow.py init --project <项目根目录> --level <1|2|3|4>
 
 ## 各 LEVEL 的实现边界
 
-### LEVEL 1：PVS-Lite
+### LEVEL 1：快速开发与完整项目记忆
 
-按 Bridge 读取包内 PVS 的接管、事实确认、范围和验证原则，以“实现—运行—观察—调整”为主，不要求每个小步骤都写测试或跑重型检查。完成或打包前集中做核心路径冒烟、构建/打包和必要人工验收；未运行项记录为待验证。仍然必须在删除数据、访问密钥或外部写入前做针对性检查和 Gate。
+按 Bridge 使用 PVS 可追溯核心和双层文档，以“实现—运行—观察—调整”为主。小变更追加 Progress/Changelog，小功能和 Bug 使用 Change Record，跨模块变更使用 REQ + PROG 并同步架构事实。完成或打包前集中验收；删除数据、密钥和外部写入仍按硬边界确认。
 
-### LEVEL 2：完整 PVS 与持续运营
+### LEVEL 2：完整 PVS 持续运营
 
-读取 `core/project-vibe-spec/PVS.md` 全部流程及其两份 reference，完整遵循接管、需求、设计、数据、决策、进度、验证和交付流程。治理文档以 `templates/template-map.json` 声明的 PVS starter 为唯一默认来源，项目已有等价事实源仍优先。同步维护 PDD/PRD、REQ、业务流、UI/技术/API/数据/部署/运营和回滚文档。实现阶段不采用每改一步就跑大量完整测试的固定节奏，测试按风险、功能集成、里程碑和版本完成阶段集中安排；认证、权限、支付、生产数据、迁移、密钥和发布仍必须事前验证并经人工 Gate。
+读取 `core/project-vibe-spec/PVS.md` 全部流程及其两份 reference，使用 Phase 0 → Phase N、范围冻结和 DoD 推进。普通 Phase 完成后自动继续，不形成用户 Gate；方向、架构、数据、权限、安全、兼容、生产和 Release 变化时切换为 `CONFIRM`。
 
 ### LEVEL 3：已有与开源项目改进
 
 按 Bridge 读取包内 PVS 的事实确认、跨模块影响、验证与 Git 交付原则，保留原有仓库的项目地图、权限与贡献规则、修改前基线、问题复现、失败测试/人工复现、影响分析、受影响回归、CI、Review、PR、发布和交接责任。改动小不等于可以跳过基线与回归。
 
-### LEVEL 4：只做需求分析
+### LEVEL 4：复杂自动化参考与路由
 
-按 Bridge 读取包内 PVS 的需求确认、方案/数据 Gate、风险和验收原则，只分析机会/问题、目标用户、场景、范围、不做、MVP、验收、技术/数据/安全/运营/成本风险、方案取舍和待确认事项。不写代码、不改数据库、不部署、不接入生产、不做自动化实现、不自动拆开发任务。
+按 Bridge 先完成需求、范围、MVP、方案和风险分析；负责人通过 `level4-execution-review` 后可实施。需求、原型、技术方案、任务拆解、实现、测试、Review、部署准备、日志和复盘所需专业 Skill 只路由、不得内嵌；缺失时说明来源、用途、权限和降级方案，安装前提醒用户确认。
 
 ## 状态迁移
 
-旧状态迁移固定为：旧 LEVEL 1→新 LEVEL 1，旧 LEVEL 2→新 LEVEL 3，旧 LEVEL 3→新 LEVEL 4。迁移前写 `state.backup.json`，在 `STATUS.md` 记录旧/新等级、Schema、原因，并把 Gate 置为 `level-migration-review` 等待人工确认。旧 LEVEL 3 改为新 LEVEL 2 时，必须使用 `migrate --target-level 2 --approved-by ... --reason ...` 显式重确认，不能自动映射。
+`0.4.0` 状态迁移到 `1.0` 时 LEVEL 1–4 保持不变；LEVEL 4 保持分析阶段并进入 `level4-execution-review`。更老 Schema 的历史数字映射继续兼容。迁移前写 `state.backup.json` 并记录旧/新版本、等级和原因。
 
-## 低风险执行循环与人工 Gate
+## 连续执行与人工 Gate
 
-读取相关实现、测试、配置和文档，建立修改前基线；一次完成一个最小可验证切片；按等级和风险运行必要检查；检查 Diff；同步文档、状态和证据。出现范围、架构、数据库、认证、权限、安全、生产、公开发布、外部 Provider 或高影响 Git 变化时停止并报告事实、证据、风险、方案和等待批准的动作。
+读取相关实现、测试、配置和文档，建立修改前基线；一次完成一个最小可验证切片；运行必要检查；检查 Diff；同步稳定认知与演进记录。普通进度、测试通过、功能完成和本地提交不是 Gate。出现实质范围、方向、架构、数据、权限、安全、兼容、生产、公开发布、外部 Provider 或高影响 Git 变化时切换为 `CONFIRM` 或 `MANUAL_ONLY`。
 
-Git 默认不推送、不创建 Draft PR；`allow_push_own_branch=false`、`allow_create_draft_pr=false`；Force Push、改写公共历史、主分支直推、Merge、Release 和生产写入禁止自动执行。Qima 只在能力缺口明确时提醒用户手动考虑，不得直接调用或自动串联。
+Git 默认不执行远程写入；`allow_push_own_branch=false`、`allow_create_draft_pr=false`，两个字段只保留范围配置。所有 LEVEL 的 push、Draft PR、Merge、Tag 和 Release 自动选择 Codex GitHub 插件，先形成合并计划并在执行前确认，完成后回读验证。Force Push 和改写公共历史永久禁止。Qima 只在能力缺口明确时提醒用户手动考虑，不得直接调用或自动串联。
 
 ## 平台适配
 
@@ -119,4 +125,4 @@ Git 默认不推送、不创建 Draft PR；`allow_push_own_branch=false`、`allo
 
 ## 每轮输出
 
-报告当前 LEVEL、阶段、状态、本轮改动和原因、实际运行的命令及结果、本地 Git 状态、未执行检查、风险、下一步和是否停在人工 Gate。没有新鲜验证证据时，不声称任务完成。
+报告当前 LEVEL、阶段、执行策略、本轮改动和原因、实际运行的命令及结果、本地 Git 状态、未执行检查、下一步和是否需要确认。LEVEL 1–3 不为普通任务重复展示空风险或空 Gate；没有新鲜验证证据时，不声称任务完成。

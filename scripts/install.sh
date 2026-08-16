@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# 公共包版本必须使用两段版本（X.X）；validate-package 负责拒绝三段版本。
+# references/ 与 templates/ 会携带 documentation-contract.md、personal-execution-loop.md、
+# level4-capability-routing.md、github-plugin-routing.md、change-record.md、
+# release-record.md、architecture.md 和 progress-record.md。
+
 platform=""
 scope="user"
 project_path="$PWD"

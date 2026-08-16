@@ -9,6 +9,8 @@
 - 状态校验：`python scripts/workflow.py validate --project .`
 - PVS 分层路由：`references/project-vibe-spec-bridge.md`
 - PVS 包内内核：`core/project-vibe-spec/PVS.md`
+- 双层文档契约：`references/documentation-contract.md`
+- 外部能力边界：LEVEL 4 专业能力只路由、不内嵌，安装仍需确认
 
-恢复会话时先校验状态。按 `LEVEL.md` 对应章节推进当前最小任务，保留用户已有修改；到人工 Gate 后报告事实、证据、风险、方案和推荐决策，未经批准不继续。LEVEL 4 只做需求分析，不写代码、不改数据库、不部署、不做自动化实现。
+恢复会话时先校验状态。按 `LEVEL.md` 对应章节和当前执行策略推进，保留用户已有修改；到人工 Gate 后报告事实、证据、方案和推荐决策。LEVEL 4 先分析，负责人确认后可实施并路由外部能力。
 <!-- project-level-workflow:end -->

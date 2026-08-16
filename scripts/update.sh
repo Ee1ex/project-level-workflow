@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# 新包必须使用两段版本（X.X）；Doctor 与安装阶段 validate-package 会拒绝三段版本。
+
 script_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
 installer="$script_dir/install.sh"
 target="project-level-workflow"

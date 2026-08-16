@@ -48,6 +48,20 @@ class EvalContractTests(unittest.TestCase):
         }
         self.assertTrue({"skill_creation", "pure_explanation", "read_only_review"}.issubset(negatives))
 
+    def test_external_and_github_routing_cases_exist(self) -> None:
+        data = json.loads((ROOT / "evals" / "evals.json").read_text(encoding="utf-8"))
+        ids = {case["id"] for case in data["cases"]}
+        self.assertTrue(
+            {
+                "github-all-levels-routing",
+                "github-plugin-unavailable",
+                "level4-capability-installed",
+                "level4-capability-missing",
+                "level4-install-declined",
+                "level4-no-nested-skill",
+            }.issubset(ids)
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
