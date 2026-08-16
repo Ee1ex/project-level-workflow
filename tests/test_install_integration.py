@@ -42,6 +42,9 @@ class InstallIntegrationTests(unittest.TestCase):
             self.assertEqual(skill_files, ["SKILL.md"])
             self.assertTrue((installed / "core" / "project-vibe-spec" / "PVS.md").is_file())
             for relative in (
+                "README.en.md",
+                "assets/readme/hero.svg",
+                "assets/readme/workflow.svg",
                 "references/documentation-contract.md",
                 "references/personal-execution-loop.md",
                 "references/level4-capability-routing.md",
