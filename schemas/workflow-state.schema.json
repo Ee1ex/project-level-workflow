@@ -12,6 +12,7 @@
     "gate",
     "status",
     "risk",
+    "execution_policy",
     "permissions",
     "current_task",
     "artifacts",
@@ -30,6 +31,7 @@
     "gate": {"type": ["string", "null"]},
     "status": {"enum": ["in_progress", "waiting_approval", "completed", "blocked"]},
     "risk": {"enum": ["R1", "R2", "R3", "R4"]},
+    "execution_policy": {"enum": ["AUTO", "CONFIRM", "MANUAL_ONLY"]},
     "permissions": {
       "type": "object",
       "required": ["allow_push_own_branch", "allow_create_draft_pr"],

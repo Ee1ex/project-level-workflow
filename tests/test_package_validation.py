@@ -47,6 +47,10 @@ class PackageValidationTests(unittest.TestCase):
         evals = json.loads((ROOT / "evals" / "evals.json").read_text(encoding="utf-8"))
         changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
         self.assertEqual(schema["properties"]["schema_version"]["const"], "2.0")
+        self.assertEqual(
+            schema["properties"]["execution_policy"]["enum"],
+            ["AUTO", "CONFIRM", "MANUAL_ONLY"],
+        )
         self.assertEqual(schema["properties"]["workflow_version"]["const"], version)
         self.assertEqual(evals["version"], version)
         self.assertIn(f"## [{version}]", changelog)
