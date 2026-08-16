@@ -18,10 +18,10 @@ class RepositoryContractTests(unittest.TestCase):
     def test_level_md_defines_all_four_current_levels(self):
         text = (ROOT / "LEVEL.md").read_text(encoding="utf-8")
         for heading in (
-            "## LEVEL 1：快速验证与轻量交付",
-            "## LEVEL 2：可持续运营项目",
+            "## LEVEL 1：快速开发与完整项目记忆",
+            "## LEVEL 2：完整 PVS 持续运营",
             "## LEVEL 3：已有、团队与开源项目改进",
-            "## LEVEL 4：复杂项目需求分析",
+            "## LEVEL 4：复杂自动化参考与路由",
         ):
             self.assertIn(heading, text)
         self.assertIn("持续更新不等于持续运营", text)
@@ -57,9 +57,25 @@ class RepositoryContractTests(unittest.TestCase):
             "references/tool-routing.md",
             "references/platform-compatibility.md",
             "references/project-vibe-spec-bridge.md",
+            "references/documentation-contract.md",
+            "references/personal-execution-loop.md",
         ]:
             self.assertTrue((ROOT / relative).is_file(), relative)
             self.assertIn(relative, skill)
+        self.assertIn("用户明确确认前", skill)
+        for policy in ("AUTO", "CONFIRM", "MANUAL_ONLY"):
+            self.assertIn(policy, skill)
+
+    def test_level_four_allows_confirmed_execution_without_embedding_capabilities(self):
+        level = (ROOT / "LEVEL.md").read_text(encoding="utf-8")
+        bridge = (ROOT / "references" / "project-vibe-spec-bridge.md").read_text(
+            encoding="utf-8"
+        )
+        for text in (level, bridge):
+            self.assertIn("负责人确认后可实施", text)
+            self.assertNotIn("LEVEL 4 永久只分析", text)
+        self.assertIn("外部", level)
+        self.assertIn("不得内嵌", level)
 
     def test_qima_is_reminder_only(self):
         skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
