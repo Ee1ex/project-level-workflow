@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
+  <title id="title">Project Level Workflow</title>
+  <desc id="desc">A minimal map connecting four workflow levels with automatic, confirm, and manual-only execution modes.</desc>
+  <rect width="1200" height="520" rx="10" fill="#09111F"/>
+
+  <g font-family="Inter, Segoe UI, system-ui, sans-serif">
+    <text x="76" y="92" fill="#65E6D1" font-size="18" font-weight="600" letter-spacing="3">PROJECT SYSTEM</text>
+    <text x="76" y="156" fill="#F6F8FB" font-size="48" font-weight="700">Project Level Workflow</text>
+    <text x="76" y="206" fill="#9EACBF" font-size="22">Choose the right workflow depth. Keep the full project memory.</text>
+
+    <g transform="translate(76 278)">
+      <path d="M90 38 H930" fill="none" stroke="#334155" stroke-width="2"/>
+      <path d="M90 38 H650" fill="none" stroke="#65E6D1" stroke-width="2"/>
+      <g>
+        <rect width="180" height="76" rx="10" fill="#101D30" stroke="#65E6D1" stroke-width="2"/>
+        <text x="90" y="32" text-anchor="middle" fill="#F6F8FB" font-size="20" font-weight="650">LEVEL 1</text>
+        <text x="90" y="56" text-anchor="middle" fill="#9EACBF" font-size="18">Build</text>
+      </g>
+      <g transform="translate(280)">
+        <rect width="180" height="76" rx="10" fill="#101D30" stroke="#65E6D1" stroke-width="2"/>
+        <text x="90" y="32" text-anchor="middle" fill="#F6F8FB" font-size="20" font-weight="650">LEVEL 2</text>
+        <text x="90" y="56" text-anchor="middle" fill="#9EACBF" font-size="18">Operate</text>
+      </g>
+      <g transform="translate(560)">
+        <rect width="180" height="76" rx="10" fill="#101D30" stroke="#334155" stroke-width="2"/>
+        <text x="90" y="32" text-anchor="middle" fill="#F6F8FB" font-size="20" font-weight="650">LEVEL 3</text>
+        <text x="90" y="56" text-anchor="middle" fill="#9EACBF" font-size="18">Improve</text>
+      </g>
+      <g transform="translate(840)">
+        <rect width="180" height="76" rx="10" fill="#101D30" stroke="#334155" stroke-width="2"/>
+        <text x="90" y="32" text-anchor="middle" fill="#F6F8FB" font-size="20" font-weight="650">LEVEL 4</text>
+        <text x="90" y="56" text-anchor="middle" fill="#9EACBF" font-size="18">Orchestrate</text>
+      </g>
+    </g>
+
+    <g transform="translate(76 420)" font-size="18" font-weight="650" letter-spacing="1">
+      <rect width="134" height="42" rx="8" fill="#65E6D1"/>
+      <text x="67" y="27" text-anchor="middle" fill="#09111F">AUTO</text>
+      <rect x="150" width="154" height="42" rx="8" fill="#101D30" stroke="#65E6D1"/>
+      <text x="227" y="27" text-anchor="middle" fill="#F6F8FB">CONFIRM</text>
+      <rect x="320" width="206" height="42" rx="8" fill="#101D30" stroke="#334155"/>
+      <text x="423" y="27" text-anchor="middle" fill="#9EACBF">MANUAL_ONLY</text>
+      <text x="1020" y="27" text-anchor="end" fill="#9EACBF" font-weight="400" letter-spacing="0">1.0 · schema 2.0</text>
+    </g>
+  </g>
+</svg>

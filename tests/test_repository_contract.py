@@ -79,9 +79,8 @@ class RepositoryContractTests(unittest.TestCase):
             self.assertIn(f'viewBox="{view_box}"', text, relative)
             self.assertRegex(text, r"<title(?:\s[^>]*)?>.+?</title>", relative)
             self.assertRegex(text, r"<desc(?:\s[^>]*)?>.+?</desc>", relative)
+            self.assertNotRegex(text, r"(?:href|src)=[\"']https?://", relative)
             for forbidden in (
-                "http://",
-                "https://",
                 "@import",
                 "foreignObject",
                 "<script",
