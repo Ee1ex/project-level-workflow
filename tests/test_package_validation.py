@@ -46,9 +46,18 @@ class PackageValidationTests(unittest.TestCase):
         )
         evals = json.loads((ROOT / "evals" / "evals.json").read_text(encoding="utf-8"))
         changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+        self.assertEqual(schema["properties"]["schema_version"]["const"], "2.0")
         self.assertEqual(schema["properties"]["workflow_version"]["const"], version)
         self.assertEqual(evals["version"], version)
         self.assertIn(f"## [{version}]", changelog)
+
+    def test_three_part_public_version_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            package = Path(directory) / "package"
+            shutil.copytree(ROOT, package)
+            (package / "VERSION").write_text("1.0.0\n", encoding="utf-8")
+            errors = workflow.validate_package(package)
+        self.assertIn("两段版本", " ".join(errors))
 
     def test_package_contract_exposes_four_active_levels(self) -> None:
         self.assertEqual(workflow.LEVEL_DOCUMENT, "LEVEL.md")

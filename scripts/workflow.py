@@ -17,9 +17,10 @@ from urllib.parse import unquote
 
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
-SCHEMA_VERSION = "1.1.0"
-LEGACY_SCHEMA_VERSIONS = {"0.9.0", "1.0.0"}
-SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
+SCHEMA_VERSION = "2.0"
+LEGACY_SCHEMA_VERSIONS = {"0.9.0", "1.0.0", "1.1.0"}
+TWO_PART_VERSION = re.compile(r"^\d+\.\d+$")
+LEGACY_THREE_PART_VERSION = re.compile(r"^\d+\.\d+\.\d+$")
 REQUIRED_FIELDS = (
     "schema_version",
     "workflow_version",
@@ -89,8 +90,8 @@ def load_version() -> str:
     if not version_path.is_file():
         raise ValueError("缺少 VERSION 文件")
     version = version_path.read_text(encoding="utf-8").strip()
-    if not SEMVER.fullmatch(version):
-        raise ValueError(f"VERSION 不是合法 SemVer：{version}")
+    if not TWO_PART_VERSION.fullmatch(version):
+        raise ValueError(f"VERSION 必须是两段版本（X.X）：{version}")
     return version
 
 
@@ -202,10 +203,12 @@ def validate_state(data: dict[str, Any], project: Path) -> list[str]:
 
     if data.get("schema_version") != SCHEMA_VERSION:
         errors.append(f"不支持的 schema_version：{data.get('schema_version')}")
-    if not isinstance(data.get("workflow_version"), str) or not SEMVER.fullmatch(
-        data.get("workflow_version", "")
+    workflow_version = data.get("workflow_version")
+    if not isinstance(workflow_version, str) or not (
+        TWO_PART_VERSION.fullmatch(workflow_version)
+        or LEGACY_THREE_PART_VERSION.fullmatch(workflow_version)
     ):
-        errors.append("workflow_version 必须是 SemVer")
+        errors.append("workflow_version 必须是两段版本或兼容的历史三段版本")
     if data.get("level") not in (1, 2, 3, 4):
         errors.append("level 只允许 1、2、3 或 4")
     if data.get("risk") not in ("R1", "R2", "R3", "R4"):
@@ -539,14 +542,25 @@ def command_migrate(args: argparse.Namespace) -> int:
         return 1
 
     old_level = state.get("level")
-    if old_level not in LEGACY_LEVEL_MIGRATION:
+    if source_version == "1.1.0":
+        if old_level not in (1, 2, 3, 4):
+            print("0.4.0 状态的 level 必须是 LEVEL 1、2、3 或 4", file=sys.stderr)
+            return 1
+    elif old_level not in LEGACY_LEVEL_MIGRATION:
         print("旧状态的 level 必须是旧 LEVEL 1、2 或 3", file=sys.stderr)
         return 1
 
     explicit_target = getattr(args, "target_level", None)
     approved_by = (getattr(args, "approved_by", None) or "").strip()
     reason = (getattr(args, "reason", None) or "").strip()
-    if explicit_target is not None:
+    if source_version == "1.1.0":
+        if explicit_target is not None or approved_by or reason:
+            print("0.4.0 状态迁移保持现有 LEVEL，不接受旧等级重映射参数", file=sys.stderr)
+            return 2
+        new_level = old_level
+        migration_event_name = "workflow_schema_migrated"
+        migration_reason = "从 0.4.0 状态协议迁移；保留已确认的 LEVEL 1–4 语义。"
+    elif explicit_target is not None:
         if explicit_target != 2 or old_level != 3:
             print(
                 "只有旧 LEVEL 3 可以通过显式重确认改为新 LEVEL 2",
@@ -575,8 +589,12 @@ def command_migrate(args: argparse.Namespace) -> int:
     state["schema_version"] = SCHEMA_VERSION
     state["workflow_version"] = load_version()
     state["level"] = new_level
-    state["gate"] = "level-migration-review"
-    state["status"] = "waiting_approval"
+    if source_version == "1.1.0" and old_level == 4:
+        state["gate"] = "level4-execution-review"
+        state["status"] = "waiting_approval"
+    elif source_version != "1.1.0":
+        state["gate"] = "level-migration-review"
+        state["status"] = "waiting_approval"
     state.setdefault(
         "permissions",
         {
@@ -604,10 +622,14 @@ def command_migrate(args: argparse.Namespace) -> int:
     atomic_write_json(backup_path, previous)
     atomic_write_json(state_path, state)
     atomic_write_text(status_path, render_status(state))
+    gate_summary = (
+        f"Gate {state['gate']} 等待人工确认"
+        if state.get("gate")
+        else "未新增人工 Gate"
+    )
     print(
         f"已从 Schema {source_version} 迁移到 {SCHEMA_VERSION}；"
-        f"旧 LEVEL {old_level} → 新 LEVEL {new_level}；"
-        "迁移后的 Gate 等待人工确认"
+        f"旧 LEVEL {old_level} → 新 LEVEL {new_level}；{gate_summary}"
     )
     return 0
 
@@ -1140,8 +1162,8 @@ def validate_package(root: Path) -> list[str]:
         evals = json.loads((root / "evals" / "evals.json").read_text(encoding="utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError, OSError) as exc:
         return [f"公共合同无法读取：{exc}"]
-    if not SEMVER.fullmatch(version):
-        errors.append("VERSION 不是合法 SemVer")
+    if not TWO_PART_VERSION.fullmatch(version):
+        errors.append("VERSION 必须是两段版本（X.X）")
     if schema.get("properties", {}).get("workflow_version", {}).get("const") != version:
         errors.append("Schema workflow_version 与 VERSION 不一致")
     if schema.get("properties", {}).get("level", {}).get("enum") != [1, 2, 3, 4]:

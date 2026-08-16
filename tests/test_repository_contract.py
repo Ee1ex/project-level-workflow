@@ -32,9 +32,10 @@ class RepositoryContractTests(unittest.TestCase):
         for relative in ["README.md", "LEVEL.md", "VERSION", "CHANGELOG.md", "LICENSE"]:
             self.assertTrue((ROOT / relative).is_file(), relative)
 
-    def test_version_is_semver(self):
+    def test_version_uses_two_numeric_segments(self):
         version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-        self.assertRegex(version, re.compile(r"^\d+\.\d+\.\d+$"))
+        self.assertRegex(version, re.compile(r"^\d+\.\d+$"))
+        self.assertEqual(version, "1.0")
 
     def test_public_text_has_no_private_absolute_paths(self):
         public_files = list(ROOT.glob("*.md")) + list(ROOT.glob("references/*.md"))

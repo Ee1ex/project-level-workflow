@@ -126,13 +126,13 @@ class WorkflowStateTests(unittest.TestCase):
             backup = json.loads(
                 (project / ".project-workflow" / "state.backup.json").read_text(encoding="utf-8")
             )
-            self.assertEqual(current["workflow_version"], "0.4.0")
+            self.assertEqual(current["workflow_version"], "1.0")
             self.assertEqual(backup["workflow_version"], "0.3.0")
             event = next(
                 item for item in current["history"] if item.get("event") == "workflow_version_updated"
             )
             self.assertEqual(event["from_version"], "0.3.0")
-            self.assertEqual(event["to_version"], "0.4.0")
+            self.assertEqual(event["to_version"], "1.0")
 
     def test_transition_requires_matching_gate_and_approval(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -181,7 +181,7 @@ class WorkflowStateTests(unittest.TestCase):
             migrated = run_cli("migrate", "--project", temp)
             self.assertEqual(migrated.returncode, 0, migrated.stderr)
             current = json.loads(state_path.read_text(encoding="utf-8"))
-            self.assertEqual(current["schema_version"], "1.1.0")
+            self.assertEqual(current["schema_version"], "2.0")
             self.assertEqual(current["level"], 1)
             self.assertFalse(current["permissions"]["allow_push_own_branch"])
             self.assertEqual(current["status"], "waiting_approval")
@@ -248,6 +248,54 @@ class WorkflowStateTests(unittest.TestCase):
             self.assertEqual(confirmation["event"], "level_reconfirmed")
             self.assertEqual(confirmation["approved_by"], "owner")
             self.assertIn("完整 PVS", confirmation["reason"])
+
+    def test_migrate_v040_level_four_preserves_analysis_and_requires_execution_review(self):
+        with tempfile.TemporaryDirectory() as temp:
+            self.assertEqual(run_cli("init", "--project", temp, "--level", "4").returncode, 0)
+            state_path = Path(temp) / ".project-workflow" / "state.json"
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            state["schema_version"] = "1.1.0"
+            state["workflow_version"] = "0.4.0"
+            state["level"] = 4
+            state["stage"] = "requirements-analysis"
+            state["gate"] = None
+            state["status"] = "in_progress"
+            state_path.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+
+            migrated = run_cli("migrate", "--project", temp)
+            self.assertEqual(migrated.returncode, 0, migrated.stderr)
+            current = json.loads(state_path.read_text(encoding="utf-8"))
+            self.assertEqual(current["schema_version"], "2.0")
+            self.assertEqual(current["workflow_version"], "1.0")
+            self.assertEqual(current["level"], 4)
+            self.assertEqual(current["stage"], "requirements-analysis")
+            self.assertEqual(current["gate"], "level4-execution-review")
+            self.assertEqual(current["status"], "waiting_approval")
+
+    def test_migrate_v040_levels_one_to_three_preserves_level_without_review_gate(self):
+        for level in (1, 2, 3):
+            with self.subTest(level=level), tempfile.TemporaryDirectory() as temp:
+                self.assertEqual(
+                    run_cli("init", "--project", temp, "--level", str(level)).returncode,
+                    0,
+                )
+                state_path = Path(temp) / ".project-workflow" / "state.json"
+                state = json.loads(state_path.read_text(encoding="utf-8"))
+                state["schema_version"] = "1.1.0"
+                state["workflow_version"] = "0.4.0"
+                state["level"] = level
+                state["gate"] = None
+                state["status"] = "in_progress"
+                state_path.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+
+                migrated = run_cli("migrate", "--project", temp)
+                self.assertEqual(migrated.returncode, 0, migrated.stderr)
+                current = json.loads(state_path.read_text(encoding="utf-8"))
+                self.assertEqual(current["schema_version"], "2.0")
+                self.assertEqual(current["workflow_version"], "1.0")
+                self.assertEqual(current["level"], level)
+                self.assertIsNone(current["gate"])
+                self.assertEqual(current["status"], "in_progress")
 
 
 if __name__ == "__main__":
