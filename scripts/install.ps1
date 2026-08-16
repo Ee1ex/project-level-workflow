@@ -72,8 +72,8 @@ function Copy-Package {
     param([string]$SourceRoot, [string]$TargetPath)
 
     $items = @(
-    'SKILL.md', 'README.md', 'LEVEL.md', 'VERSION', 'CHANGELOG.md', 'LICENSE',
-        'core', 'references', 'templates', 'schemas', 'scripts', 'adapters', 'evals'
+    'SKILL.md', 'README.md', 'README.en.md', 'LEVEL.md', 'VERSION', 'CHANGELOG.md', 'LICENSE',
+        'assets', 'core', 'references', 'templates', 'schemas', 'scripts', 'adapters', 'evals'
     )
     New-Item -ItemType Directory -Path $TargetPath -Force | Out-Null
     foreach ($item in $items) {

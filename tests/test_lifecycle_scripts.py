@@ -55,6 +55,13 @@ class LifecycleScriptTests(unittest.TestCase):
             self.assertNotIn("LEVEL3-", content)
             self.assertNotIn("LEVEL4-", content)
 
+    def test_installers_include_bilingual_readme_assets(self) -> None:
+        for name in ("install.ps1", "install.sh"):
+            with self.subTest(script=name):
+                content = self._read(name)
+                self.assertIn("README.en.md", content)
+                self.assertIn("assets", content)
+
     def test_update_runs_doctor_and_state_migration_before_replacement(self) -> None:
         for name in ("update.ps1", "update.sh"):
             with self.subTest(script=name):

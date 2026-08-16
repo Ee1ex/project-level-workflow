@@ -5,6 +5,25 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
+README_HEADINGS = {
+    "README.md": [
+        "3 分钟快速开始",
+        "它如何工作",
+        "选对 LEVEL",
+        "双层项目记忆",
+        "兼容、安全与 GitHub 交付",
+        "平台、开发验证与许可证",
+    ],
+    "README.en.md": [
+        "Quick Start in 3 Minutes",
+        "How It Works",
+        "Choose the Right LEVEL",
+        "Two-Layer Project Memory",
+        "Compatibility, Safety, and GitHub Delivery",
+        "Platforms, Development Verification, and License",
+    ],
+}
+
 
 class RepositoryContractTests(unittest.TestCase):
     def test_level_md_is_the_only_root_level_document(self):
@@ -29,8 +48,61 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertIn("旧 LEVEL 3 → 新 LEVEL 4", text)
 
     def test_public_metadata_exists(self):
-        for relative in ["README.md", "LEVEL.md", "VERSION", "CHANGELOG.md", "LICENSE"]:
+        for relative in [
+            "README.md",
+            "README.en.md",
+            "assets/readme/hero.svg",
+            "assets/readme/workflow.svg",
+            "LEVEL.md",
+            "VERSION",
+            "CHANGELOG.md",
+            "LICENSE",
+        ]:
             self.assertTrue((ROOT / relative).is_file(), relative)
+
+    def test_bilingual_readmes_are_linked_and_isomorphic(self):
+        chinese = (ROOT / "README.md").read_text(encoding="utf-8")
+        english = (ROOT / "README.en.md").read_text(encoding="utf-8")
+        self.assertIn('href="README.en.md">English</a>', chinese)
+        self.assertRegex(english, r'href="README\.md">(?:简体中文|中文)</a>')
+        for filename, expected in README_HEADINGS.items():
+            text = (ROOT / filename).read_text(encoding="utf-8")
+            headings = re.findall(r"^## (.+?)\s*$", text, flags=re.MULTILINE)
+            self.assertEqual(headings, expected, filename)
+
+    def test_readme_visuals_are_accessible_and_self_contained(self):
+        for relative, view_box in (
+            ("assets/readme/hero.svg", "0 0 1200 520"),
+            ("assets/readme/workflow.svg", "0 0 1200 420"),
+        ):
+            text = (ROOT / relative).read_text(encoding="utf-8")
+            self.assertIn(f'viewBox="{view_box}"', text, relative)
+            self.assertRegex(text, r"<title(?:\s[^>]*)?>.+?</title>", relative)
+            self.assertRegex(text, r"<desc(?:\s[^>]*)?>.+?</desc>", relative)
+            self.assertNotRegex(text, r"(?:href|src)=[\"']https?://", relative)
+            for forbidden in (
+                "@import",
+                "foreignObject",
+                "<script",
+                "<animate",
+                "<image",
+            ):
+                self.assertNotIn(forbidden, text, f"{relative}: {forbidden}")
+
+    def test_readmes_use_local_static_visuals_without_dynamic_widgets(self):
+        for filename in README_HEADINGS:
+            text = (ROOT / filename).read_text(encoding="utf-8")
+            self.assertIn('src="assets/readme/hero.svg"', text, filename)
+            self.assertIn('src="assets/readme/workflow.svg"', text, filename)
+            self.assertNotRegex(text, r"!\[[^]]*\]\(https?://", filename)
+            for forbidden in (
+                "visitor-count",
+                "profile-views",
+                "github-readme-stats",
+                "github-profile-trophy",
+                "shields.io",
+            ):
+                self.assertNotIn(forbidden, text.lower(), f"{filename}: {forbidden}")
 
     def test_version_uses_two_numeric_segments(self):
         version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
@@ -121,6 +193,19 @@ class RepositoryContractTests(unittest.TestCase):
             self.assertIn(phrase, readme)
         self.assertIn("负责人确认后可实施", readme)
         self.assertNotIn("LEVEL 4 只建立分析材料", readme)
+
+        english = (ROOT / "README.en.md").read_text(encoding="utf-8")
+        for phrase in (
+            "LEVEL 1 / LEVEL 2",
+            "Phase 0",
+            "AUTO",
+            "CONFIRM",
+            "MANUAL_ONLY",
+            "GitHub",
+            "X.X",
+            "core/project-vibe-spec/PVS.md",
+        ):
+            self.assertIn(phrase, english)
 
     def test_qima_is_reminder_only(self):
         skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")

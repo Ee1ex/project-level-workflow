@@ -111,8 +111,8 @@ cleanup_install() {
 trap cleanup_install EXIT
 
 mkdir -p -- "$staging"
-items=(SKILL.md README.md LEVEL.md VERSION CHANGELOG.md LICENSE core \
-  references templates schemas scripts adapters evals)
+items=(SKILL.md README.md README.en.md LEVEL.md VERSION CHANGELOG.md LICENSE assets \
+  core references templates schemas scripts adapters evals)
 for item in "${items[@]}"; do
   [[ -e "$package_root/$item" ]] || continue
   cp -R -- "$package_root/$item" "$staging/"
