@@ -1,8 +1,8 @@
 # Project Level Workflow 双语 README 美化设计
 
-日期：2026-08-16  
-状态：已获产品设计批准，等待规格审阅  
-目标分支：`codex/beautify-readme-1-0`  
+日期：2026-08-16
+状态：规格已批准
+目标分支：`codex/beautify-readme-1-0`
 基线：远端 `main`，Commit `0917103008c770785b3479468168cd0cb52aa952`
 
 ## 1. 目标
