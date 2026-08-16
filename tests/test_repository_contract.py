@@ -63,8 +63,8 @@ class RepositoryContractTests(unittest.TestCase):
     def test_bilingual_readmes_are_linked_and_isomorphic(self):
         chinese = (ROOT / "README.md").read_text(encoding="utf-8")
         english = (ROOT / "README.en.md").read_text(encoding="utf-8")
-        self.assertRegex(chinese, r"\[[^]]*English[^]]*\]\(README\.en\.md\)")
-        self.assertRegex(english, r"\[[^]]*(?:简体中文|中文)[^]]*\]\(README\.md\)")
+        self.assertIn('href="README.en.md">English</a>', chinese)
+        self.assertRegex(english, r'href="README\.md">(?:简体中文|中文)</a>')
         for filename, expected in README_HEADINGS.items():
             text = (ROOT / filename).read_text(encoding="utf-8")
             headings = re.findall(r"^## (.+?)\s*$", text, flags=re.MULTILINE)
