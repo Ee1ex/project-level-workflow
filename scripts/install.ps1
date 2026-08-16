@@ -18,6 +18,11 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# 公共包版本必须使用两段版本（X.X）；validate-package 负责拒绝三段版本。
+# references/ 会携带 documentation-contract.md、personal-execution-loop.md、
+# level4-capability-routing.md、github-plugin-routing.md；templates/ 会携带
+# change-record.md、release-record.md、architecture.md、progress-record.md。
+
 function Resolve-InstallTarget {
     param([string]$SelectedPlatform, [string]$SelectedScope, [string]$SelectedProject)
 

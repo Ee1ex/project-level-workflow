@@ -5,6 +5,13 @@
 ## [1.0] - 2026-08-16
 
 - 公共版本改为两段式 `1.0`，状态 Schema 升级为 `2.0`，并兼容迁移 `0.4.0` 三段版本状态。
+- LEVEL 1 改为快速开发与完整项目记忆，使用稳定认知层、演进记录层和轻量 Change/Progress Record。
+- LEVEL 2 全量采用包内 PVS、Phase 0 → Phase N、范围冻结和 DoD；普通 Phase 完成不再形成审批 Gate。
+- LEVEL 3 优先复用 Issue、PR、CHANGELOG、ADR 和仓库文档，不为小改动创建平行完整 PVS 文档树。
+- LEVEL 4 改为先分析、负责人确认后可实施，保留十节点参考并只路由外部专业能力。
+- LEVEL 1–3 对用户使用 `AUTO`、`CONFIRM`、`MANUAL_ONLY`；状态继续兼容内部 R1–R4。
+- 所有 LEVEL 的 GitHub 远程交付自动路由 Codex GitHub 插件，执行前统一确认并在完成后回读验证。
+- 新增双层文档、项目架构、Change Record、Release Record、个人执行循环和路由契约；旧模板继续作为兼容入口。
 
 ## [0.4.0] - 2026-08-16
 

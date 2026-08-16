@@ -1141,6 +1141,7 @@ def validate_package(root: Path) -> list[str]:
         LEVEL_DOCUMENT,
         "schemas/workflow-state.schema.json",
         "evals/evals.json",
+        "docs/release/1.0-readiness.md",
         "core/project-vibe-spec/PVS.md",
         "core/project-vibe-spec/SOURCE.md",
         "core/project-vibe-spec/references/decision-gates.md",

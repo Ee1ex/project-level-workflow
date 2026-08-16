@@ -106,6 +106,16 @@ class PackageValidationTests(unittest.TestCase):
             errors = workflow.validate_package(package)
         self.assertIn("github-plugin-routing.md", " ".join(errors))
 
+    def test_release_readiness_record_is_required(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            package = Path(directory) / "package"
+            shutil.copytree(ROOT, package)
+            readiness = package / "docs" / "release" / "1.0-readiness.md"
+            if readiness.exists():
+                readiness.unlink()
+            errors = workflow.validate_package(package)
+        self.assertIn("1.0-readiness.md", " ".join(errors))
+
 
 if __name__ == "__main__":
     unittest.main()

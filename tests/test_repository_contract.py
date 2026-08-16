@@ -105,6 +105,23 @@ class RepositoryContractTests(unittest.TestCase):
         for phrase in ("已安装则路由", "缺失时提醒安装", "拒绝安装时降级", "不得内嵌"):
             self.assertIn(phrase, level4)
 
+    def test_readme_describes_public_1_0_contract(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        for phrase in (
+            "LEVEL 1 / LEVEL 2 优先",
+            "稳定认知层",
+            "演进记录层",
+            "Phase 0 → Phase N",
+            "AUTO",
+            "CONFIRM",
+            "MANUAL_ONLY",
+            "GitHub 插件",
+            "X.X",
+        ):
+            self.assertIn(phrase, readme)
+        self.assertIn("负责人确认后可实施", readme)
+        self.assertNotIn("LEVEL 4 只建立分析材料", readme)
+
     def test_qima_is_reminder_only(self):
         skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
         self.assertIn("Qima", skill)

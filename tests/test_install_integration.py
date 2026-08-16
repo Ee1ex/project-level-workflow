@@ -41,6 +41,19 @@ class InstallIntegrationTests(unittest.TestCase):
             skill_files = sorted(path.relative_to(installed).as_posix() for path in installed.rglob("SKILL.md"))
             self.assertEqual(skill_files, ["SKILL.md"])
             self.assertTrue((installed / "core" / "project-vibe-spec" / "PVS.md").is_file())
+            for relative in (
+                "references/documentation-contract.md",
+                "references/personal-execution-loop.md",
+                "references/level4-capability-routing.md",
+                "references/github-plugin-routing.md",
+                "templates/common/change-record.md",
+                "templates/common/release-record.md",
+                "templates/level1/architecture.md",
+                "templates/level1/progress-record.md",
+                "templates/level1/project-brief.md",
+            ):
+                self.assertTrue((installed / relative).is_file(), relative)
+            self.assertEqual((installed / "VERSION").read_text(encoding="utf-8").strip(), "1.0")
             self.assertEqual(marker.read_text(encoding="utf-8"), "keep")
             self.assertIn("独立 project-vibe-spec", result.stdout)
 

@@ -1,15 +1,15 @@
 # Project Level Workflow
 
-一套面向 AI Agent 的四级项目开发流程。LEVEL 表示项目责任模式，R1–R4 表示当前动作风险；两者分开判断，在人工 Gate 前保留事实、证据和用户决定。
+一套 LEVEL 1 / LEVEL 2 优先、面向个人开发与长期接管的四级项目工作流。LEVEL 表示项目责任模式；LEVEL 1–3 对用户只展示 `AUTO`、`CONFIRM`、`MANUAL_ONLY`，在必要确认前保留事实、证据和用户决定。
 
 ## 四个 LEVEL
 
 | LEVEL | 责任模式 | 适用项目 | 核心流程 |
 | --- | --- | --- | --- |
-| 1 | 快速验证与轻量交付 | 离线工具、脚本、Skill、插件、游戏 Mod、原型、静态页面、无用户系统的 Web 工具、版本化下载物 | PVS-Lite；快速实现，完成或打包前集中冒烟、构建/打包和人工验收 |
-| 2 | 自有项目的可持续运营 | 自己负责、要上线并持续运营的 Web/App/小程序/在线服务；有账户、权限、云端数据、服务端逻辑、公开 API、定时任务或长期支持责任 | 完整 `project-vibe-spec`；维护需求、设计、数据、决策、进度、验证、发布、回滚和运营文档 |
-| 3 | 已有与开源项目改进 | 参与他人、团队、公司或开源仓库，提交 Bug 修复、体验优化或功能 PR | 保留项目地图、权限与贡献规则、修改前基线、复现、受影响回归、CI、Review、PR 和交接 |
-| 4 | 复杂项目需求分析 | 大型产品、多系统编排、复杂自动化、多人协作或完整运营自动化 | 当前只做机会/需求分析、范围、MVP、方案、风险、验收和待确认事项，不开发 |
+| 1 | 快速开发与完整项目记忆 | 离线工具、脚本、Skill、插件、游戏 Mod、原型、静态页面和版本化下载物 | 实现—运行—观察—调整；稳定认知 + Ledger/小记录；集中验收 |
+| 2 | 完整 PVS 持续运营 | 自己负责且承担账户、权限、云端数据、服务、部署、备份、回滚、监控或支持责任 | 全量包内 PVS；Phase 0 → Phase N、范围冻结、DoD 和持续运营 |
+| 3 | 已有、团队与开源项目改进 | 参与他人、团队、公司或开源仓库 | 复用 Issue、PR、CHANGELOG、ADR；轻量 Change Record、基线、回归和交接 |
+| 4 | 复杂自动化参考与路由 | 大型产品、多系统编排、复杂自动化和多人协作 | 先分析，负责人确认后可实施；十节点参考，外部专业能力只路由 |
 
 “持续更新”和“持续运营”不是同一个判断。重新打包、上传新版本供用户下载，或更新一份静态页面，只要没有线上用户状态、云端业务数据、持续在线服务和运行责任，仍然默认 LEVEL 1。持续运营指需要长期承担服务可用性、用户/权限、数据、发布、备份、回滚、监控、反馈或支持责任，通常进入 LEVEL 2。
 
@@ -20,24 +20,26 @@
 1. 参与他人、团队、公司或开源仓库？推荐 LEVEL 3。
 2. 自己负责且需要线上运行和持续运营？推荐 LEVEL 2。
 3. 只是离线、静态或可下载交付物，更新时重新打包/上传即可？推荐 LEVEL 1。
-4. 大型、多系统或复杂自动化项目？推荐 LEVEL 4；第一版只做需求分析。
-5. 再单独叠加当前动作的 R1–R4 风险和人工 Gate。
+4. 大型、多系统或复杂自动化项目？推荐 LEVEL 4；先分析并确认实现边界。
+5. 再选择 `AUTO`、`CONFIRM` 或 `MANUAL_ONLY`；内部 R1–R4 仅用于兼容和判断。
 
 “以后可能更新”不能单独触发升级。无法区分时，列出事实、假设和替代 LEVEL，等待项目负责人确认。
 
-## `project-vibe-spec` 分层
+## 双层文档与包内 PVS
 
-0.4.0 起，完整 PVS 治理规则和 starter 模板已内嵌在 `core/project-vibe-spec/PVS.md` 及其资源目录。安装本包后只显示一个 `project-level-workflow` Skill；四个 LEVEL 均不需要第二次下载或联网补齐 PVS。模板职责以 `templates/template-map.json` 为准。
+完整 PVS 治理规则和 starter 模板内嵌在 `core/project-vibe-spec/PVS.md` 及其资源目录。安装本包后只显示一个 `project-level-workflow` Skill，不需要第二次下载 PVS。模板职责以 `templates/template-map.json` 为准。
 
-LEVEL 1 使用 PVS-Lite：至少保留项目规则、`AGENTS.md`、`DOCUMENT_MAP.md`、Project Brief、`STATUS.md`、`state.json`/备份和必要的待验证事项；需求跨模块、持久化或高风险时再增加 REQ、决策或技术文档。
+稳定认知层回答“项目现在是什么”：`AGENTS.md`、`DOCUMENT_MAP.md`、目标、范围、核心路径、架构、模块、调用、数据、依赖、构建、测试和交付。演进记录层回答“为什么变成这样”：Requirements、Decisions、Progress、Bug、CHANGELOG、Release Record 和验证证据。
 
-LEVEL 2 使用完整 PVS：复用已有文档目录，维护 PDD/PRD、Requirements/REQ、决策、业务流、UI/技术/API/数据/部署/运营文档及进度和验证证据。完整 PVS 不要求每次小改动都跑重型测试，测试按风险、功能集成、里程碑和版本完成阶段集中安排。
+LEVEL 1 建立完整项目记忆，但小变化只需 Progress/Changelog，小功能和 Bug 使用轻量 Change Record；跨模块变化才增加详细 REQ/DEC/PROG 并同步架构事实。
 
-LEVEL 4 只建立分析材料和待确认记录；不写代码、不改数据库、不部署、不接入生产、不自动拆开发任务。
+LEVEL 2 全量使用包内 PVS，默认覆盖 AGENTS、DOCUMENT_MAP、PDD/PRD、Requirements、Decisions、Progress、业务流、UI、架构、API、数据、权限、部署、监控、备份、回滚、运营、Bug、待验证和版本记录。普通 Phase 达成 DoD 后自动继续，不形成重复审批。
+
+LEVEL 3 优先复用已有仓库事实，不创建平行完整 PVS 文档树。LEVEL 4 先分析，负责人确认后可实施；专业 Skill 缺失时说明来源、用途、权限与降级方案，安装仍需确认。
 
 ## 状态与兼容迁移
 
-状态保存在 `.project-workflow/state.json` 和 `docs/project-workflow/STATUS.md`，更新前写入 `state.backup.json`。旧状态数字语义迁移为：
+状态保存在 `.project-workflow/state.json` 和 `docs/project-workflow/STATUS.md`，更新前写入 `state.backup.json`。Schema `1.1.0` / workflow `0.4.0` 升级到 `2.0` / `1.0` 时保持 LEVEL 1–4 不变；LEVEL 4 保持分析阶段并进入执行确认。更老状态数字语义继续兼容：
 
 ```text
 旧 LEVEL 1 → 新 LEVEL 1
@@ -45,7 +47,7 @@ LEVEL 4 只建立分析材料和待确认记录；不写代码、不改数据库
 旧 LEVEL 3 → 新 LEVEL 4
 ```
 
-迁移会在状态和 `STATUS.md` 记录旧/新等级、Schema 版本和原因，并将迁移后的 Gate 置为待人工确认，不会静默批准。旧 LEVEL 3 若要改成新 LEVEL 2，必须使用显式重确认并留下批准人、原因和历史记录。
+迁移会在状态和 `STATUS.md` 记录旧/新等级、版本和原因。`0.4.0` 的 LEVEL 1–3 不新增语义 Gate；更老数字重映射仍等待确认。
 
 ## 支持平台
 
@@ -83,8 +85,8 @@ python .cursor/skills/project-level-workflow/scripts/workflow.py render-adapter 
 
 1. 读取项目规则、文档地图和相关状态。
 2. 按选择协议推荐并等待 LEVEL 确认。
-3. 只创建当前等级需要的最小文档。
-4. 在批准范围内推进 R1/R2；R3/R4、生产、数据、密钥和公开发布停在人工 Gate。
+3. 建立或复用稳定认知层与演进记录层。
+4. 在批准范围内按 `AUTO` 连续推进；需要决策时改为 `CONFIRM`，只允许人工执行时标记 `MANUAL_ONLY`。
 5. 记录实际验证；未运行的检查只能写成待验证。
 
 公开远程写入默认关闭：
@@ -94,7 +96,11 @@ allow_push_own_branch=false
 allow_create_draft_pr=false
 ```
 
-禁止 Force Push、改写公共历史、提交用户无关修改、自动生产发布和自动公开宣传。外部 Plugin/服务不随本包安装，使用前仍需检查登录、授权、数据范围和费用。
+所有 LEVEL 的 push、Draft PR、Merge、Tag 和 Release 自动选择 Codex GitHub 插件：先只读核对并合并远程动作计划，执行前一次确认，完成后远端回读验证。禁止 Force Push、改写公共历史、提交用户无关修改、自动生产发布和自动公开宣传。
+
+## 版本
+
+公共版本只使用 `X.X`，本版为 `1.0`；Git Tag 为 `v1.0`，状态 Schema 为独立的 `2.0`。读取和迁移兼容历史 `0.4.0` 三段状态，但新包和新状态不再写三段版本。
 
 ## 开发验证
 
