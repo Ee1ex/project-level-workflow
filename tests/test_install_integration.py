@@ -57,6 +57,50 @@ class InstallIntegrationTests(unittest.TestCase):
             self.assertEqual(marker.read_text(encoding="utf-8"), "keep")
             self.assertIn("独立 project-vibe-spec", result.stdout)
 
+    @unittest.skipUnless(os.name == "nt" and shutil.which("powershell"), "PowerShell integration test")
+    def test_failed_staged_replacement_restores_previous_install(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            installed = project / ".codex" / "skills" / "project-level-workflow"
+            installed.mkdir(parents=True)
+            marker = installed / "keep.txt"
+            marker.write_text("previous-install", encoding="utf-8")
+            (installed / "VERSION").write_text("0.4.0\n", encoding="utf-8")
+            installer = ROOT / "scripts" / "install.ps1"
+            command = rf"""
+$script:MoveCount = 0
+function Move-Item {{
+    param([string]$LiteralPath, [string]$Destination)
+    $script:MoveCount += 1
+    if ($script:MoveCount -eq 2) {{ throw 'injected staged replacement failure' }}
+    Microsoft.PowerShell.Management\Move-Item -LiteralPath $LiteralPath -Destination $Destination
+}}
+try {{
+    . '{installer}' -Platform codex -Scope project -ProjectPath '{project}'
+}} catch {{
+    Write-Output $_.Exception.Message
+    exit 23
+}}
+"""
+            result = subprocess.run(
+                ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command],
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                capture_output=True,
+                check=False,
+                env={
+                    **os.environ,
+                    "PATH": str(Path(sys.executable).parent)
+                    + os.pathsep
+                    + os.environ.get("PATH", ""),
+                },
+            )
+            self.assertEqual(result.returncode, 23, result.stdout + result.stderr)
+            self.assertIn("injected staged replacement failure", result.stdout)
+            self.assertEqual(marker.read_text(encoding="utf-8"), "previous-install")
+            self.assertFalse(list(installed.parent.glob("project-level-workflow.installing-*")))
+
 
 if __name__ == "__main__":
     unittest.main()
