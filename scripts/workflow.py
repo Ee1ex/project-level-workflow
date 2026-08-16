@@ -656,6 +656,10 @@ def command_doctor(args: argparse.Namespace) -> int:
         "references/tool-routing.md",
         "references/platform-compatibility.md",
         "references/project-vibe-spec-bridge.md",
+        "references/documentation-contract.md",
+        "references/personal-execution-loop.md",
+        "references/level4-capability-routing.md",
+        "references/github-plugin-routing.md",
         "adapters/codex/AGENTS.fragment.md",
         "adapters/claude-code/CLAUDE.fragment.md",
         "adapters/cursor/project-level-workflow.mdc",
@@ -909,6 +913,7 @@ def evaluate_git_action(
         "delete_remote_branch",
         "ready_pr",
         "merge",
+        "tag",
         "release",
     }
     if action not in supported:
@@ -921,15 +926,18 @@ def evaluate_git_action(
     }
     reasons: list[str] = decision["reasons"]
 
+    if action in {"force_push", "rewrite_history"}:
+        reasons.append("禁止 Force Push 或改写公共历史；任何 Gate 都不能覆盖。")
+        return decision
     if action in {
-        "force_push",
-        "rewrite_history",
         "delete_remote_branch",
         "ready_pr",
         "merge",
+        "tag",
         "release",
     }:
-        reasons.append("禁止自动执行高影响远端动作；人工 Gate 不能把它变成无人值守动作。")
+        decision["requires_gate"] = True
+        reasons.append("必须进入 GitHub 插件远程动作计划，并在执行前取得明确确认。")
         return decision
     if action == "git_init":
         decision["requires_gate"] = True
@@ -983,7 +991,10 @@ def evaluate_git_action(
     if action == "create_draft_pr" and not permissions.get("allow_create_draft_pr"):
         reasons.append("permissions.allow_create_draft_pr=false。")
 
-    decision["allowed"] = not reasons
+    if reasons:
+        return decision
+    decision["requires_gate"] = True
+    reasons.append("远程写入必须进入 GitHub 插件动作计划并取得执行前明确确认。")
     return decision
 
 
@@ -1142,6 +1153,10 @@ def validate_package(root: Path) -> list[str]:
         "references/platform-compatibility.md",
         "references/git-and-draft-pr.md",
         "references/project-vibe-spec-bridge.md",
+        "references/documentation-contract.md",
+        "references/personal-execution-loop.md",
+        "references/level4-capability-routing.md",
+        "references/github-plugin-routing.md",
         "adapters/codex/AGENTS.fragment.md",
         "adapters/claude-code/CLAUDE.fragment.md",
         "adapters/cursor/project-level-workflow.mdc",

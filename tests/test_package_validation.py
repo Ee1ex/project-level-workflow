@@ -98,6 +98,14 @@ class PackageValidationTests(unittest.TestCase):
             errors = workflow.validate_package(package)
         self.assertIn("外部 PVS", " ".join(errors))
 
+    def test_external_routing_contracts_are_required(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            package = Path(directory) / "package"
+            shutil.copytree(ROOT, package)
+            (package / "references" / "github-plugin-routing.md").unlink()
+            errors = workflow.validate_package(package)
+        self.assertIn("github-plugin-routing.md", " ".join(errors))
+
 
 if __name__ == "__main__":
     unittest.main()

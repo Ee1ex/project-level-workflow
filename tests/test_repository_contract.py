@@ -77,6 +77,34 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertIn("外部", level)
         self.assertIn("不得内嵌", level)
 
+    def test_level_four_and_github_plugin_routing_contracts(self):
+        level4_path = ROOT / "references" / "level4-capability-routing.md"
+        github_path = ROOT / "references" / "github-plugin-routing.md"
+        self.assertTrue(level4_path.is_file())
+        self.assertTrue(github_path.is_file())
+        level4 = level4_path.read_text(encoding="utf-8")
+        github_routing = github_path.read_text(encoding="utf-8")
+        for action in ("push", "Draft PR", "Merge", "Tag", "Release"):
+            self.assertIn(action, github_routing)
+        self.assertIn("GitHub 插件", github_routing)
+        self.assertIn("执行前确认", github_routing)
+        self.assertIn("远端验证", github_routing)
+        for node in (
+            "需求判断",
+            "原型",
+            "技术方案",
+            "任务拆解",
+            "实现",
+            "测试联调",
+            "代码 Review",
+            "部署准备",
+            "日志排查",
+            "复盘",
+        ):
+            self.assertIn(node, level4)
+        for phrase in ("已安装则路由", "缺失时提醒安装", "拒绝安装时降级", "不得内嵌"):
+            self.assertIn(phrase, level4)
+
     def test_qima_is_reminder_only(self):
         skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
         self.assertIn("Qima", skill)

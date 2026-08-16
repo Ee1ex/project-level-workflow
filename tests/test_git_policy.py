@@ -48,19 +48,22 @@ class GitPolicyTests(unittest.TestCase):
         self.assertIn("Gate", " ".join(decision["reasons"]))
 
     def test_force_push_and_history_rewrite_are_always_forbidden(self) -> None:
-        for action in (
-            "force_push",
-            "rewrite_history",
-            "delete_remote_branch",
-            "ready_pr",
-            "merge",
-            "release",
-        ):
+        for action in ("force_push", "rewrite_history"):
             with self.subTest(action=action):
                 decision = workflow.evaluate_git_action(action, ready_state(), ready_git())
                 self.assertFalse(decision["allowed"])
                 self.assertFalse(decision["requires_gate"])
                 self.assertIn("禁止", " ".join(decision["reasons"]))
+
+    def test_high_impact_remote_actions_route_to_github_approval(self) -> None:
+        for action in ("delete_remote_branch", "ready_pr", "merge", "tag", "release"):
+            with self.subTest(action=action):
+                decision = workflow.evaluate_git_action(action, ready_state(), ready_git())
+                self.assertFalse(decision["allowed"])
+                self.assertTrue(decision["requires_gate"])
+                reasons = " ".join(decision["reasons"])
+                self.assertIn("GitHub 插件", reasons)
+                self.assertIn("明确确认", reasons)
 
     def test_local_commit_requires_owned_branch_scope_and_verification(self) -> None:
         decision = workflow.evaluate_git_action("local_commit", ready_state(), ready_git())
@@ -82,16 +85,15 @@ class GitPolicyTests(unittest.TestCase):
         self.assertIn("allow_push_own_branch", " ".join(push["reasons"]))
         self.assertIn("allow_create_draft_pr", " ".join(draft["reasons"]))
 
-    def test_authorized_own_branch_push_and_draft_pr_can_proceed(self) -> None:
+    def test_configured_remote_scope_still_requires_action_time_approval(self) -> None:
         state = ready_state()
         state["permissions"]["allow_push_own_branch"] = True
         state["permissions"]["allow_create_draft_pr"] = True
-        self.assertTrue(
-            workflow.evaluate_git_action("push_own_branch", state, ready_git())["allowed"]
-        )
-        self.assertTrue(
-            workflow.evaluate_git_action("create_draft_pr", state, ready_git())["allowed"]
-        )
+        for action in ("push_own_branch", "create_draft_pr"):
+            decision = workflow.evaluate_git_action(action, state, ready_git())
+            self.assertFalse(decision["allowed"])
+            self.assertTrue(decision["requires_gate"])
+            self.assertIn("GitHub 插件", " ".join(decision["reasons"]))
 
     def test_main_branch_remote_write_is_denied(self) -> None:
         state = ready_state()

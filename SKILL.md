@@ -36,7 +36,7 @@ compatibility: Codex、Claude Code、Cursor；核心脚本需要 Python 3.10+，
 4. 验证通过后读取 `docs/project-workflow/STATUS.md` 和当前任务；状态与聊天、代码或项目规则冲突时展示差异并询问。
 5. 状态不存在时进入 LEVEL 推荐，不直接创建大量文档或修改实现。
 
-状态协议见 `references/state-protocol.md`；双层文档见 `references/documentation-contract.md`；个人连续执行见 `references/personal-execution-loop.md`；PVS 分层见 `references/project-vibe-spec-bridge.md`；外部能力路由见 `references/tool-routing.md`。
+状态协议见 `references/state-protocol.md`；双层文档见 `references/documentation-contract.md`；个人连续执行见 `references/personal-execution-loop.md`；PVS 分层见 `references/project-vibe-spec-bridge.md`；LEVEL 4 能力路由见 `references/level4-capability-routing.md`；GitHub 交付见 `references/github-plugin-routing.md`；通用工具路由见 `references/tool-routing.md`。
 
 包内 PVS 治理入口为 `core/project-vibe-spec/PVS.md`。按 Bridge 只加载当前 LEVEL 需要的章节和模板；不得要求用户另行安装、查找或下载 `project-vibe-spec`。包内入口缺失时按包损坏停止，不回退到个人 Skills 目录中的独立副本。
 
@@ -117,7 +117,7 @@ python scripts/workflow.py init --project <项目根目录> --level <1|2|3|4>
 
 读取相关实现、测试、配置和文档，建立修改前基线；一次完成一个最小可验证切片；运行必要检查；检查 Diff；同步稳定认知与演进记录。普通进度、测试通过、功能完成和本地提交不是 Gate。出现实质范围、方向、架构、数据、权限、安全、兼容、生产、公开发布、外部 Provider 或高影响 Git 变化时切换为 `CONFIRM` 或 `MANUAL_ONLY`。
 
-Git 默认不推送、不创建 Draft PR；`allow_push_own_branch=false`、`allow_create_draft_pr=false`；Force Push、改写公共历史、主分支直推、Merge、Release 和生产写入禁止自动执行。Qima 只在能力缺口明确时提醒用户手动考虑，不得直接调用或自动串联。
+Git 默认不执行远程写入；`allow_push_own_branch=false`、`allow_create_draft_pr=false`，两个字段只保留范围配置。所有 LEVEL 的 push、Draft PR、Merge、Tag 和 Release 自动选择 Codex GitHub 插件，先形成合并计划并在执行前确认，完成后回读验证。Force Push 和改写公共历史永久禁止。Qima 只在能力缺口明确时提醒用户手动考虑，不得直接调用或自动串联。
 
 ## 平台适配
 

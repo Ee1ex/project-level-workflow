@@ -2,7 +2,7 @@
 
 ## 何时读取
 
-准备初始化 Git、创建分支、本地提交、推送分支或创建 Draft PR 前读取。
+准备初始化 Git、创建分支、本地提交、push、Draft PR、Merge、Tag 或 Release 前读取，并同时读取 `references/github-plugin-routing.md`。
 
 ## 目标
 
@@ -16,10 +16,10 @@
 | `git init` | 人工 Gate | 用户确认初始化当前目录 |
 | 创建本地功能分支 | 条件允许 | R1/R2、已有任务、仓库有效 |
 | 本地提交 | 条件允许 | Skill 自有或已接管分支、修改全在任务范围、验证通过、无无关修改 |
-| 推送自有分支 | 默认关闭 | 满足本地提交条件，且 `allow_push_own_branch=true`、Remote 与身份已确认 |
-| 创建或更新 Draft PR | 默认关闭 | 推送条件成立，且 `allow_create_draft_pr=true` |
+| push 自有分支 | GitHub 插件确认路径 | 满足本地提交条件、范围配置开启、Remote 与身份已确认，再取得动作时确认 |
+| 创建或更新 Draft PR | GitHub 插件确认路径 | push 条件成立、范围配置开启，再取得动作时确认 |
 | 写入默认分支 | 禁止自动执行 | 改为功能分支与 PR 流程 |
-| 删除远端分支、转 Ready、Merge、Release | 禁止自动执行 | 必须由用户在对应平台单独确认并操作 |
+| 删除远端分支、转 Ready、Merge、Tag、Release | GitHub 插件确认路径 | 纳入合并后的远程计划，用户明确确认后由插件执行并回读 |
 | Force Push、改写公共历史 | 永久禁止 | Gate 不得覆盖 |
 
 ## 范围判定
@@ -38,7 +38,7 @@
 
 ## 身份与远端确认
 
-工作流 CLI 不猜测 GitHub 登录状态。Agent 应通过 GitHub 官方 CLI 或平台连接器独立确认身份，再把该事实传给策略检查。认证信息、Token 和密钥不得写入状态文件。
+工作流 CLI 不猜测 GitHub 登录状态。Agent 应优先通过 Codex GitHub 插件确认身份、仓库和远端状态，再把事实传给策略检查。认证信息、Token 和密钥不得写入状态文件。`allow_push_own_branch` 与 `allow_create_draft_pr` 只表示范围配置，不是动作时批准。
 
 ## Qima
 

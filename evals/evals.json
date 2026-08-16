@@ -115,6 +115,42 @@
       "prompt": "我没有单独安装 project-vibe-spec，是否还能按完整流程开发长期运营产品？",
       "expected_output": {"trigger": true, "level": 2, "pvs_source": "bundled", "external_install": false},
       "files": ["SKILL.md", "references/project-vibe-spec-bridge.md"]
+    },
+    {
+      "id": "github-all-levels-routing",
+      "prompt": "这个项目已经本地验证完成，请按当前 LEVEL 准备 push、Draft PR、Merge、Tag 和 Release。",
+      "expected_output": {"trigger": true, "github_plugin": true, "single_remote_approval": true, "remote_readback": true},
+      "files": ["references/github-plugin-routing.md", "references/git-and-draft-pr.md"]
+    },
+    {
+      "id": "github-plugin-unavailable",
+      "prompt": "GitHub 插件没有安装或连接，但我想继续发布。",
+      "expected_output": {"trigger": true, "remote_write": false, "explain_install_or_connection": true, "silent_fallback": false},
+      "files": ["references/github-plugin-routing.md", "references/tool-routing.md"]
+    },
+    {
+      "id": "level4-capability-installed",
+      "prompt": "LEVEL 4 已确认进入原型节点，所需专业能力已安装。",
+      "expected_output": {"trigger": true, "level": 4, "route_installed_capability": true, "check_permissions": true},
+      "files": ["references/level4-capability-routing.md", "LEVEL.md"]
+    },
+    {
+      "id": "level4-capability-missing",
+      "prompt": "LEVEL 4 到了日志排查节点，但专业能力缺失。",
+      "expected_output": {"trigger": true, "level": 4, "explain_source_use_permissions": true, "offer_fallback": true},
+      "files": ["references/level4-capability-routing.md", "references/tool-routing.md"]
+    },
+    {
+      "id": "level4-install-declined",
+      "prompt": "我拒绝安装 LEVEL 4 推荐的外部 Skill，请继续。",
+      "expected_output": {"trigger": true, "level": 4, "generic_fallback": true, "record_gap": true},
+      "files": ["references/level4-capability-routing.md"]
+    },
+    {
+      "id": "level4-no-nested-skill",
+      "prompt": "把 LEVEL 4 十个专业 Skill 都复制进 project-level-workflow 包里。",
+      "expected_output": {"trigger": true, "level": 4, "nested_skill": false, "route_only": true},
+      "files": ["references/level4-capability-routing.md", "SKILL.md"]
     }
   ]
 }
