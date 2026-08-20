@@ -20,6 +20,9 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_NAME = "elx-level"
 PRODUCT_NAME = "ELX Level"
 SCHEMA_VERSION = "2.0"
+STATE_DIR_NAME = ".elx-level"
+LEGACY_STATE_DIR_NAME = ".project-workflow"
+DOCS_DIR_NAME = "elx-level"
 LEGACY_SCHEMA_VERSIONS = {"0.9.0", "1.0.0", "1.1.0"}
 TWO_PART_VERSION = re.compile(r"^\d+\.\d+$")
 LEGACY_THREE_PART_VERSION = re.compile(r"^\d+\.\d+\.\d+$")
@@ -390,10 +393,20 @@ def command_init(args: argparse.Namespace) -> int:
     if not project.is_dir():
         print(f"项目目录不存在：{project}", file=sys.stderr)
         return 1
-    state_dir = project / ".project-workflow"
+    state_dir = project / STATE_DIR_NAME
     state_path = state_dir / "state.json"
     backup_path = state_dir / "state.backup.json"
-    status_path = project / "docs" / "project-workflow" / "STATUS.md"
+    status_path = project / "docs" / DOCS_DIR_NAME / "STATUS.md"
+    legacy_state_dir = project / LEGACY_STATE_DIR_NAME
+    if legacy_state_dir.exists() and not state_dir.exists():
+        print(
+            f"发现旧状态目录 {legacy_state_dir}；请先运行 migrate 完成复制迁移",
+            file=sys.stderr,
+        )
+        return 2
+    if legacy_state_dir.exists() and state_dir.exists():
+        print("新旧状态目录同时存在；请人工核对，未覆盖任何状态", file=sys.stderr)
+        return 2
 
     previous: dict[str, Any] | None = None
     if state_path.exists():
@@ -424,8 +437,8 @@ def command_init(args: argparse.Namespace) -> int:
 
 def command_validate(args: argparse.Namespace) -> int:
     project = Path(args.project).expanduser().resolve()
-    state_path = project / ".project-workflow" / "state.json"
     try:
+        state_path, _, _ = _require_current_state_paths(project)
         state = _load_json(state_path)
     except ValueError as exc:
         print(f"状态无效：\n- {exc}", file=sys.stderr)
@@ -439,18 +452,47 @@ def command_validate(args: argparse.Namespace) -> int:
 
 
 def _state_paths(project: Path) -> tuple[Path, Path, Path]:
-    state_dir = project / ".project-workflow"
+    state_dir = project / STATE_DIR_NAME
     return (
         state_dir / "state.json",
         state_dir / "state.backup.json",
-        project / "docs" / "project-workflow" / "STATUS.md",
+        project / "docs" / DOCS_DIR_NAME / "STATUS.md",
     )
+
+
+def _require_current_state_paths(project: Path) -> tuple[Path, Path, Path]:
+    paths = _state_paths(project)
+    legacy_state = project / LEGACY_STATE_DIR_NAME / "state.json"
+    if not paths[0].is_file() and legacy_state.is_file():
+        raise ValueError(
+            f"发现旧状态 {legacy_state}；请运行 migrate 复制到 {STATE_DIR_NAME}"
+        )
+    return paths
+
+
+def _copy_legacy_state(project: Path) -> tuple[tuple[Path, Path, Path], bool]:
+    legacy = project / LEGACY_STATE_DIR_NAME
+    current = project / STATE_DIR_NAME
+    if legacy.exists() and current.exists():
+        raise FileExistsError("新旧状态目录同时存在；请人工核对，未覆盖任何状态")
+    if not legacy.exists():
+        return _state_paths(project), False
+    legacy_state = _load_json(legacy / "state.json")
+    source_schema = legacy_state.get("schema_version")
+    if source_schema == SCHEMA_VERSION:
+        errors = validate_state(legacy_state, project)
+        if errors:
+            raise ValueError("旧状态无效：" + "；".join(errors))
+    elif source_schema not in LEGACY_SCHEMA_VERSIONS:
+        raise ValueError(f"不支持从 Schema {source_schema} 迁移")
+    shutil.copytree(legacy, current)
+    return _state_paths(project), True
 
 
 def command_status(args: argparse.Namespace) -> int:
     project = Path(args.project).expanduser().resolve()
-    state_path, backup_path, status_path = _state_paths(project)
     try:
+        state_path, backup_path, status_path = _require_current_state_paths(project)
         state = _load_json(state_path)
     except ValueError as exc:
         print(f"状态无效：\n- {exc}", file=sys.stderr)
@@ -474,8 +516,8 @@ def command_status(args: argparse.Namespace) -> int:
 
 def command_transition(args: argparse.Namespace) -> int:
     project = Path(args.project).expanduser().resolve()
-    state_path, backup_path, status_path = _state_paths(project)
     try:
+        state_path, backup_path, status_path = _require_current_state_paths(project)
         state = _load_json(state_path)
     except ValueError as exc:
         print(f"状态无效：\n- {exc}", file=sys.stderr)
@@ -527,9 +569,12 @@ def command_transition(args: argparse.Namespace) -> int:
 
 def command_migrate(args: argparse.Namespace) -> int:
     project = Path(args.project).expanduser().resolve()
-    state_path, backup_path, status_path = _state_paths(project)
     try:
+        (state_path, backup_path, status_path), copied_legacy = _copy_legacy_state(project)
         state = _load_json(state_path)
+    except FileExistsError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     except ValueError as exc:
         print(f"状态无效：\n- {exc}", file=sys.stderr)
         return 1
@@ -539,6 +584,20 @@ def command_migrate(args: argparse.Namespace) -> int:
         if errors:
             print("状态无效：\n- " + "\n- ".join(errors), file=sys.stderr)
             return 1
+        if copied_legacy:
+            previous = json.loads(json.dumps(state, ensure_ascii=False))
+            _refresh_workflow_version(state)
+            errors = validate_state(state, project)
+            if errors:
+                print("品牌迁移后状态无效：\n- " + "\n- ".join(errors), file=sys.stderr)
+                return 1
+            atomic_write_json(backup_path, previous)
+            atomic_write_json(state_path, state)
+            atomic_write_text(status_path, render_status(state))
+            print(
+                f"已复制旧状态到 {STATE_DIR_NAME}；旧目录保持不变，后续只使用新路径"
+            )
+            return 0
         print("状态 Schema 已是最新版本")
         return 0
     if source_version not in LEGACY_SCHEMA_VERSIONS:
@@ -697,7 +756,7 @@ def command_doctor(args: argparse.Namespace) -> int:
 
     if args.project:
         project = Path(args.project).expanduser().resolve()
-        state_path = project / ".project-workflow" / "state.json"
+        state_path = project / STATE_DIR_NAME / "state.json"
         state_valid = False
         if state_path.is_file():
             try:
@@ -754,8 +813,8 @@ def _write_with_backup(path: Path, content: str) -> None:
 
 def command_render_adapter(args: argparse.Namespace) -> int:
     project = Path(args.project).expanduser().resolve()
-    state_path, _, _ = _state_paths(project)
     try:
+        state_path, _, _ = _require_current_state_paths(project)
         state = _load_json(state_path)
     except ValueError as exc:
         print(f"状态无效：\n- {exc}", file=sys.stderr)
@@ -1002,8 +1061,8 @@ def evaluate_git_action(
 
 def command_git_policy(args: argparse.Namespace) -> int:
     project = Path(args.project).expanduser().resolve()
-    state_path, _, _ = _state_paths(project)
     try:
+        state_path, _, _ = _require_current_state_paths(project)
         state = _load_json(state_path)
     except ValueError as exc:
         print(f"状态无效：\n- {exc}", file=sys.stderr)
@@ -1024,7 +1083,9 @@ def _public_markdown_files(root: Path) -> list[Path]:
     paths: list[Path] = []
     for path in root.rglob("*.md"):
         relative = path.relative_to(root).as_posix()
-        if relative.startswith(("docs/superpowers/", "tests/", ".project-workflow/")):
+        if relative.startswith(
+            ("docs/superpowers/", "tests/", f"{STATE_DIR_NAME}/", f"{LEGACY_STATE_DIR_NAME}/")
+        ):
             continue
         if "__pycache__" in path.parts:
             continue

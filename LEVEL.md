@@ -1,4 +1,4 @@
-# Project Level Workflow 四级模型
+# ELX Level 四级模型
 
 本文是项目等级选择与执行流程的唯一权威文档。LEVEL 表示项目的责任模式，不表示代码规模。LEVEL 1–3 对用户只展示 `AUTO`、`CONFIRM`、`MANUAL_ONLY`；R1–R4 仅作为历史状态兼容字段和内部风险依据。
 
@@ -33,7 +33,8 @@
 - Project Brief：目标用户、核心路径、范围冻结、不做、平台、交付方式和验收标准。
 - 当前架构、目录、模块、调用关系、数据、依赖、构建与交付事实。
 - Requirements、Decisions、Progress Ledger，以及 Changelog、Change Record 和 Release Record 入口。
-- `.project-workflow/state.json`、`state.backup.json` 和 `docs/project-workflow/STATUS.md`。
+- `.elx-level/state.json`、`state.backup.json` 和 `docs/elx-level/STATUS.md`。
+- 旧 `.project-workflow` 只由 `migrate` 一次性复制；旧目录保持不变，新旧目录并存时停止且不覆盖。
 - 必要决策、结构化小记录和 `pending-verification.md`。
 
 小功能、小 Bug 使用轻量 Change Record；文案、样式和小配置至少追加 Progress Ledger 或 Changelog。跨模块功能使用 REQ + PROG，有取舍时增加 DEC；架构、数据和权限变化还必须回写稳定认知层。不要求每个小切片建立大型方案或平行文档树。
