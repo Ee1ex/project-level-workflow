@@ -22,7 +22,7 @@
 
 ## Cursor
 
-- 使用 `.cursor/rules/project-level-workflow.mdc` 项目规则。
+- 使用 `.cursor/rules/elx-level.mdc` 项目规则。
 - 可同时使用简洁 `AGENTS.md` 作为通用项目入口。
 - 不生成旧式 `.cursorrules`。
 - 规则引用共享 `LEVEL.md`、状态和当前任务，不复制完整流程。
@@ -32,7 +32,7 @@
 - LEVEL 1 显示 PVS-Lite 和集中冒烟/打包验证边界。
 - LEVEL 2 显示完整 PVS、持续运营和风险/里程碑验证边界。
 - LEVEL 3 显示已有仓库基线、回归、Review、PR 和交接责任。
-- LEVEL 4 显示只做需求分析，不写代码、不改数据库、不部署、不自动拆任务。
+- LEVEL 4 显示先分析、负责人确认后可实施，并按需路由外部专业能力。
 
 ## 状态迁移
 

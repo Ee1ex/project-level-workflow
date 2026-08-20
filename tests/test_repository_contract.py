@@ -120,6 +120,18 @@ class RepositoryContractTests(unittest.TestCase):
             (ROOT / "adapters" / "cursor" / "project-level-workflow.mdc").exists()
         )
 
+    def test_public_docs_use_elx_level_brand_and_paths(self):
+        for relative in ("README.md", "README.en.md", "LEVEL.md"):
+            text = (ROOT / relative).read_text(encoding="utf-8")
+            self.assertIn("ELX Level", text)
+            self.assertIn(".elx-level", text)
+            self.assertNotIn("Ee1ex/project-level-workflow", text)
+        self.assertTrue((ROOT / "docs" / "release" / "2.0-readiness.md").is_file())
+        skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn(".elx-level/state.json", skill)
+        self.assertIn("docs/elx-level/STATUS.md", skill)
+        self.assertNotIn("init` 只写入 `.project-workflow", skill)
+
     def test_public_text_has_no_private_absolute_paths(self):
         public_files = list(ROOT.glob("*.md")) + list(ROOT.glob("references/*.md"))
         forbidden = ("C:\\Users\\", "D:\\VibeCodingFiles", "/Users/")
@@ -188,7 +200,7 @@ class RepositoryContractTests(unittest.TestCase):
         for phrase in ("已安装则路由", "缺失时提醒安装", "拒绝安装时降级", "不得内嵌"):
             self.assertIn(phrase, level4)
 
-    def test_readme_describes_public_1_0_contract(self):
+    def test_readme_describes_public_2_0_contract(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         for phrase in (
             "LEVEL 1 / LEVEL 2 优先",

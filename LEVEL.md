@@ -130,7 +130,7 @@ LEVEL 4 适用于大型产品、多系统编排、复杂自动化、多人协作
 
 ## 状态兼容迁移
 
-文档入口只使用本文件。Schema `1.1.0` / workflow `0.4.0` 状态迁移到 `2.0` / `1.0` 时保持 LEVEL 1–4 不变；LEVEL 4 保持分析阶段并进入 `level4-execution-review`。更老 Schema 的历史数字语义继续兼容：
+文档入口只使用本文件。Schema `1.1.0` / workflow `0.4.0` 状态迁移到 `2.0` / `2.0` 时保持 LEVEL 1–4 不变；LEVEL 4 保持分析阶段并进入 `level4-execution-review`。更老 Schema 的历史数字语义继续兼容：
 
 ```text
 旧 LEVEL 1 → 新 LEVEL 1

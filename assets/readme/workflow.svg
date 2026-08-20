@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
-  <title id="title">Project Level Workflow execution map</title>
+  <title id="title">ELX Level execution map</title>
   <desc id="desc">Four project responsibility levels route through three execution modes into evidence, memory, and a GitHub delivery gate.</desc>
   <rect width="1200" height="420" rx="10" fill="#09111F"/>
 

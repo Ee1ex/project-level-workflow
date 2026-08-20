@@ -106,7 +106,7 @@
     },
     {
       "id": "single-skill-offline",
-      "prompt": "断网环境只安装 project-level-workflow 后，帮我初始化一个 LEVEL 2 项目。",
+      "prompt": "断网环境只安装 elx-level 后，帮我初始化一个 LEVEL 2 项目。",
       "expected_output": {"trigger": true, "level": 2, "single_skill": true, "network_required": false},
       "files": ["README.md", "core/project-vibe-spec/PVS.md", "templates/template-map.json"]
     },
@@ -148,7 +148,7 @@
     },
     {
       "id": "level4-no-nested-skill",
-      "prompt": "把 LEVEL 4 十个专业 Skill 都复制进 project-level-workflow 包里。",
+      "prompt": "把 LEVEL 4 十个专业 Skill 都复制进 elx-level 包里。",
       "expected_output": {"trigger": true, "level": 4, "nested_skill": false, "route_only": true},
       "files": ["references/level4-capability-routing.md", "SKILL.md"]
     }

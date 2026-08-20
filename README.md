@@ -1,8 +1,8 @@
-# Project Level Workflow
+# ELX Level
 
 <p align="right"><a href="README.en.md">English</a></p>
 
-<img src="assets/readme/hero.svg" alt="Project Level Workflow：选择刚好的流程强度，保留完整项目记忆" width="100%">
+<img src="assets/readme/hero.svg" alt="ELX Level：选择刚好的流程强度，保留完整项目记忆" width="100%">
 
 为个人开发者而设的四级项目工作流。它让 LEVEL 1 / LEVEL 2 优先，把普通进度留在 `AUTO`，只在真正重要的决定前进入 `CONFIRM` 或 `MANUAL_ONLY`。
 
@@ -11,18 +11,18 @@
 下面以 Windows、Codex、项目级安装和 LEVEL 1 为例。先审查 Dry Run；确认 LEVEL 后，再初始化项目。
 
 ```powershell
-git clone https://github.com/Ee1ex/project-level-workflow.git
-Set-Location project-level-workflow
+git clone https://github.com/Ee1ex/elx-level.git
+Set-Location elx-level
 
 $ProjectPath = 'D:\path\to\your-project'
 ./scripts/install.ps1 -Platform codex -Scope project -ProjectPath $ProjectPath -DryRun
 ./scripts/install.ps1 -Platform codex -Scope project -ProjectPath $ProjectPath
 
-python "$ProjectPath\.codex\skills\project-level-workflow\scripts\workflow.py" init --project $ProjectPath --level 1
-python "$ProjectPath\.codex\skills\project-level-workflow\scripts\workflow.py" status --project $ProjectPath
+python "$ProjectPath\.codex\skills\elx-level\scripts\workflow.py" init --project $ProjectPath --level 1
+python "$ProjectPath\.codex\skills\elx-level\scripts\workflow.py" status --project $ProjectPath
 ```
 
-初始化会建立 `.project-workflow/state.json` 和 `docs/project-workflow/STATUS.md`。其他平台与安装范围见下方说明；四个 LEVEL 的完整规则以 [`LEVEL.md`](LEVEL.md) 为唯一权威源。
+初始化会建立 `.elx-level/state.json` 和 `docs/elx-level/STATUS.md`。其他平台与安装范围见下方说明；四个 LEVEL 的完整规则以 [`LEVEL.md`](LEVEL.md) 为唯一权威源。
 
 ## 它如何工作
 
@@ -59,7 +59,7 @@ LEVEL 1 同时建立两层记忆，但小功能、小修改只需要 Progress/Ch
 
 ## 兼容、安全与 GitHub 交付
 
-`1.0` 使用 workflow `1.0` 与 schema `2.0`。读取和迁移兼容历史 `0.4.0` 三段状态，安全刷新后只写两段公共版本 `X.X`。迁移前写入 `state.backup.json`；`0.4.0` 的 LEVEL 1–4 保持原数字，其中旧 LEVEL 4 仍停在分析边界并等待执行确认。更老状态按协议迁移：旧 LEVEL 1 → 新 LEVEL 1、旧 LEVEL 2 → 新 LEVEL 3、旧 LEVEL 3 → 新 LEVEL 4。
+`2.0` 使用 workflow `2.0` 与 schema `2.0`。读取和迁移兼容历史 `0.4.0` 三段状态，安全刷新后只写两段公共版本 `X.X`。`migrate` 会把旧 `.project-workflow` 完整复制到 `.elx-level`，保留旧目录不变；新旧目录并存时停止且不覆盖。`0.4.0` 的 LEVEL 1–4 保持原数字，其中旧 LEVEL 4 仍停在分析边界并等待执行确认。更老状态按协议迁移：旧 LEVEL 1 → 新 LEVEL 1、旧 LEVEL 2 → 新 LEVEL 3、旧 LEVEL 3 → 新 LEVEL 4。
 
 以下动作始终需要确认：批量删除、生产数据、密钥、支付、账号权限、不可逆迁移、安全降级、生产部署、公开发布、对外发送、Merge 和 Release。Force Push 与改写公共历史禁止。
 
@@ -79,7 +79,7 @@ LEVEL 1 同时建立两层记忆，但小功能、小修改只需要 Progress/Ch
 ./scripts/install.sh --platform claude-code --scope user
 ```
 
-适配器只引用当前 LEVEL、状态和分层策略，不复制完整流程。更新器会先运行 Doctor，并在替换旧安装前迁移项目状态和创建时间戳备份；卸载器只移除托管 Skill，默认保留 `.project-workflow/` 与 `docs/project-workflow/`。
+适配器只引用当前 LEVEL、状态和分层策略，不复制完整流程。更新器会先运行 Doctor，并在替换新安装前显式迁移项目状态和创建时间戳备份；卸载器只移除 `elx-level`，默认保留 `.elx-level/`、`docs/elx-level/`、旧 `.project-workflow/` 和旧 Skill 安装。
 
 开发验证只依赖 Python 3.10+ 标准库：
 
@@ -89,4 +89,4 @@ python scripts/workflow.py doctor --package-root .
 python scripts/workflow.py validate-package --package-root .
 ```
 
-当前公共版本为 `1.0`，Git Tag 为 `v1.0`。项目采用 [MIT License](LICENSE)。
+当前公共版本为 `2.0`，Git Tag 目标为 `v2.0`。项目采用 [MIT License](LICENSE)。
