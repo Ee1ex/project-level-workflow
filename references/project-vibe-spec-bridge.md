@@ -1,6 +1,6 @@
-# Project Vibe Spec 包内分层桥接
+# ELX Level 的 Project Vibe Spec 包内分层桥接
 
-本文件说明 Project Level Workflow 如何按 `LEVEL.md` 加载包内 `core/project-vibe-spec/PVS.md`。`LEVEL.md` 始终是唯一的 LEVEL 权威；本桥接只规定 PVS 的加载深度和边界，不重新定义等级。
+本文件说明 ELX Level 如何按 `LEVEL.md` 加载包内 `core/project-vibe-spec/PVS.md`。`LEVEL.md` 始终是唯一的 LEVEL 权威；本桥接只规定 PVS 的加载深度和边界，不重新定义等级。
 
 运行时不安装、不下载、不查找、也不回退到外部 `project-vibe-spec` Skill。项目已有规则和事实文档优先，包内模板只补齐缺失职责；独立安装的同名 Skill 不属于本包托管范围。
 
@@ -22,7 +22,7 @@ LEVEL 1 使用 PVS 可追溯核心支持快速开发，同时保留完整项目�
 - 根目录 `DOCUMENT_MAP.md`：真实文档路径索引，不承载业务事实。
 - Project Brief、架构和模块事实：目标、范围冻结、核心路径、调用、数据、构建与交付。
 - Requirements、Decisions、Progress Ledger，以及轻量 Change/Progress Record。
-- `docs/project-workflow/STATUS.md`、`.project-workflow/state.json` 和状态备份。
+- `docs/elx-level/STATUS.md`、`.elx-level/state.json` 和状态备份。
 - 必要的决策和待验证事项；未运行的检查只能记录为待验证。
 
 小变化不需要逐条详细 REQ 或全套 PDD/PRD；跨模块功能使用 REQ + PROG，有取舍时增加 DEC。开发以“实现—运行—观察—调整”为主，完成或打包前集中做核心路径冒烟、构建/打包和人工验收。

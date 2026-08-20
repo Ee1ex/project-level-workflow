@@ -23,28 +23,29 @@ if [[ "$scope" == "project" ]]; then
   [[ -d "$project_path" ]] || { echo "错误：项目目录不存在：$project_path" >&2; exit 1; }
   base="$(CDPATH= cd -- "$project_path" && pwd -P)"
   case "$platform" in
-    codex) target="$base/.codex/skills/project-level-workflow" ;;
-    claude-code) target="$base/.claude/skills/project-level-workflow" ;;
-    cursor) target="$base/.cursor/skills/project-level-workflow" ;;
+    codex) target="$base/.codex/skills/elx-level" ;;
+    claude-code) target="$base/.claude/skills/elx-level" ;;
+    cursor) target="$base/.cursor/skills/elx-level" ;;
   esac
 else
   case "$platform" in
-    codex) target="${CODEX_HOME:-$HOME/.codex}/skills/project-level-workflow" ;;
-    claude-code) target="$HOME/.claude/skills/project-level-workflow" ;;
-    cursor) target="$HOME/.cursor/skills/project-level-workflow" ;;
+    codex) target="${CODEX_HOME:-$HOME/.codex}/skills/elx-level" ;;
+    claude-code) target="$HOME/.claude/skills/elx-level" ;;
+    cursor) target="$HOME/.cursor/skills/elx-level" ;;
   esac
 fi
 
 case "$target" in
-  */project-level-workflow) ;;
+  */elx-level) ;;
   *) echo "错误：拒绝删除非托管路径：$target" >&2; exit 1 ;;
 esac
 
-echo "将卸载 project-level-workflow：$target"
+echo "将卸载 elx-level：$target"
 echo "托管目录包含统一 LEVEL.md；只删除该托管目录。"
-echo "托管目录中的 PVS 包内内核将随 project-level-workflow 一起移除。"
+echo "托管目录中的 PVS 包内内核将随 elx-level 一起移除。"
 echo "独立 project-vibe-spec 不属于本包托管范围，本卸载器不处理。"
-echo "项目状态 .project-workflow 与 docs/project-workflow 将保留。"
+echo "新状态 .elx-level 与 docs/elx-level 将保留；旧状态 .project-workflow 也将保留。"
+echo "旧 Skill project-level-workflow 不在本次卸载范围。"
 [[ -e "$target" ]] || { echo "未发现安装目录，无需处理。"; exit 0; }
 if [[ "$dry_run" == "true" ]]; then
   echo "DryRun：仅显示计划，不删除文件。"

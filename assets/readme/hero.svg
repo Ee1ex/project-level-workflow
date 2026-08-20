@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
-  <title id="title">Project Level Workflow</title>
+  <title id="title">ELX Level</title>
   <desc id="desc">A minimal map connecting four workflow levels with automatic, confirm, and manual-only execution modes.</desc>
   <rect width="1200" height="520" rx="10" fill="#09111F"/>
 
   <g font-family="Inter, Segoe UI, system-ui, sans-serif">
-    <text x="76" y="128" fill="#F6F8FB" font-size="52" font-weight="700">Project Level Workflow</text>
+    <text x="76" y="128" fill="#F6F8FB" font-size="52" font-weight="700">ELX Level</text>
     <text x="76" y="178" fill="#9EACBF" font-size="24">Choose the right workflow depth. Keep the full project memory.</text>
 
     <g transform="translate(76 258)">

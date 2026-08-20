@@ -1,8 +1,8 @@
-# Project Level Workflow
+# ELX Level
 
 <p align="right"><a href="README.md">简体中文</a></p>
 
-<img src="assets/readme/hero.svg" alt="Project Level Workflow: choose the right workflow depth and keep the full project memory" width="100%">
+<img src="assets/readme/hero.svg" alt="ELX Level: choose the right workflow depth and keep the full project memory" width="100%">
 
 A four-level project workflow built for individual developers. It puts LEVEL 1 / LEVEL 2 first, keeps routine progress in `AUTO`, and pauses only important decisions in `CONFIRM` or `MANUAL_ONLY`.
 
@@ -11,18 +11,18 @@ A four-level project workflow built for individual developers. It puts LEVEL 1 /
 This example uses Windows, Codex, a project-scoped installation, and LEVEL 1. Review the Dry Run first; confirm the LEVEL before initializing the project.
 
 ```powershell
-git clone https://github.com/Ee1ex/project-level-workflow.git
-Set-Location project-level-workflow
+git clone https://github.com/Ee1ex/elx-level.git
+Set-Location elx-level
 
 $ProjectPath = 'D:\path\to\your-project'
 ./scripts/install.ps1 -Platform codex -Scope project -ProjectPath $ProjectPath -DryRun
 ./scripts/install.ps1 -Platform codex -Scope project -ProjectPath $ProjectPath
 
-python "$ProjectPath\.codex\skills\project-level-workflow\scripts\workflow.py" init --project $ProjectPath --level 1
-python "$ProjectPath\.codex\skills\project-level-workflow\scripts\workflow.py" status --project $ProjectPath
+python "$ProjectPath\.codex\skills\elx-level\scripts\workflow.py" init --project $ProjectPath --level 1
+python "$ProjectPath\.codex\skills\elx-level\scripts\workflow.py" status --project $ProjectPath
 ```
 
-Initialization creates `.project-workflow/state.json` and `docs/project-workflow/STATUS.md`. Other platforms and installation scopes are covered below. [`LEVEL.md`](LEVEL.md) is the single authoritative source for all four LEVEL definitions.
+Initialization creates `.elx-level/state.json` and `docs/elx-level/STATUS.md`. Other platforms and installation scopes are covered below. [`LEVEL.md`](LEVEL.md) is the single authoritative source for all four LEVEL definitions.
 
 ## How It Works
 
@@ -59,7 +59,7 @@ The complete governance rules and starter templates are embedded in [`core/proje
 
 ## Compatibility, Safety, and GitHub Delivery
 
-Version `1.0` uses workflow `1.0` and schema `2.0`. Reading and migration remain compatible with historical three-part `0.4.0` state; after a safe refresh, new public versions use only two-part `X.X`. Migration first writes `state.backup.json`. LEVEL 1–4 from `0.4.0` keep their numeric meaning, while the old LEVEL 4 remains at its analysis boundary until execution is confirmed. Older states migrate by protocol: old LEVEL 1 → new LEVEL 1, old LEVEL 2 → new LEVEL 3, and old LEVEL 3 → new LEVEL 4.
+Version `2.0` uses workflow `2.0` and schema `2.0`. Reading and migration remain compatible with historical three-part `0.4.0` state; after a safe refresh, new public versions use only two-part `X.X`. `migrate` copies the complete legacy `.project-workflow` directory to `.elx-level` while leaving the source unchanged; if both directories exist, it stops without overwriting either. LEVEL 1–4 from `0.4.0` keep their numeric meaning, while the old LEVEL 4 remains at its analysis boundary until execution is confirmed. Older states migrate by protocol: old LEVEL 1 → new LEVEL 1, old LEVEL 2 → new LEVEL 3, and old LEVEL 3 → new LEVEL 4.
 
 These actions always require confirmation: bulk deletion, production data, secrets, payments, account permissions, irreversible migration, security reduction, production deployment, public publishing, outbound messages, Merge, and Release. Force Push and rewriting public history are prohibited.
 
@@ -79,7 +79,7 @@ Codex, Claude Code, and Cursor are supported:
 ./scripts/install.sh --platform claude-code --scope user
 ```
 
-Adapters reference only the current LEVEL, state, and layering strategy instead of copying the complete workflow. The updater runs Doctor first, migrates project state, and creates a timestamped backup before replacing an installation. The uninstaller removes only the managed Skill and preserves `.project-workflow/` and `docs/project-workflow/` by default.
+Adapters reference only the current LEVEL, state, and layering strategy instead of copying the complete workflow. The updater runs Doctor first, explicitly migrates project state, and creates a timestamped backup before replacing the new installation. The uninstaller removes only `elx-level` and preserves `.elx-level/`, `docs/elx-level/`, the legacy `.project-workflow/`, and the legacy Skill installation by default.
 
 Development verification uses only the Python 3.10+ standard library:
 
@@ -89,4 +89,4 @@ python scripts/workflow.py doctor --package-root .
 python scripts/workflow.py validate-package --package-root .
 ```
 
-The current public version is `1.0`, with Git Tag `v1.0`. The project is available under the [MIT License](LICENSE).
+The current public version is `2.0`, with Git Tag target `v2.0`. The project is available under the [MIT License](LICENSE).

@@ -7,11 +7,11 @@
 ## 权威文件
 
 ```text
-.project-workflow/
+.elx-level/
 ├─ state.json
 └─ state.backup.json
 
-docs/project-workflow/
+docs/elx-level/
 ├─ STATUS.md
 ├─ decisions/
 ├─ requirements/
@@ -43,7 +43,9 @@ docs/project-workflow/
 
 ## 状态迁移
 
-Schema `1.1.0` / workflow `0.4.0` 迁移到 `2.0` / `1.0` 时保持 LEVEL 1–4 不变；LEVEL 1–3 不新增语义 Gate，LEVEL 4 保持分析阶段并进入 `level4-execution-review`。
+ELX Level 2.0 只允许 `migrate` 从旧 `.project-workflow` 一次性复制到 `.elx-level`；旧目录保持不变。其他命令发现只有旧目录时必须停止并提示运行 `migrate`，不得隐式复制。新旧状态目录并存时必须停止并要求人工核对，不覆盖任何一方。迁移后的状态摘要写入 `docs/elx-level/STATUS.md`。
+
+Schema `1.1.0` / workflow `0.4.0` 迁移到 `2.0` / `2.0` 时保持 LEVEL 1–4 不变；LEVEL 1–3 不新增语义 Gate，LEVEL 4 保持分析阶段并进入 `level4-execution-review`。
 
 更老状态的数字语义固定为：
 

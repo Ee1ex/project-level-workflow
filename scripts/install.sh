@@ -30,7 +30,7 @@ case "$mode" in install|update) ;; *) echo "错误：内部 mode 无效。" >&2;
 script_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
 package_root="$(CDPATH= cd -- "$script_dir/.." && pwd -P)"
 version_file="$package_root/VERSION"
-[[ -f "$version_file" ]] || { echo "错误：找不到 VERSION，当前目录不是完整的 project-level-workflow 包。" >&2; exit 1; }
+[[ -f "$version_file" ]] || { echo "错误：找不到 VERSION，当前目录不是完整的 elx-level 包。" >&2; exit 1; }
 version="$(tr -d '\r\n' < "$version_file")"
 
 if command -v python3 >/dev/null 2>&1; then
@@ -49,26 +49,31 @@ if [[ "$scope" == "project" ]]; then
   [[ -d "$project_path" ]] || { echo "错误：项目目录不存在：$project_path" >&2; exit 1; }
   base="$(CDPATH= cd -- "$project_path" && pwd -P)"
   case "$platform" in
-    codex) target="$base/.codex/skills/project-level-workflow" ;;
-    claude-code) target="$base/.claude/skills/project-level-workflow" ;;
-    cursor) target="$base/.cursor/skills/project-level-workflow" ;;
+    codex) target="$base/.codex/skills/elx-level" ;;
+    claude-code) target="$base/.claude/skills/elx-level" ;;
+    cursor) target="$base/.cursor/skills/elx-level" ;;
   esac
 else
   case "$platform" in
-    codex) target="${CODEX_HOME:-$HOME/.codex}/skills/project-level-workflow" ;;
-    claude-code) target="$HOME/.claude/skills/project-level-workflow" ;;
-    cursor) target="$HOME/.cursor/skills/project-level-workflow" ;;
+    codex) target="${CODEX_HOME:-$HOME/.codex}/skills/elx-level" ;;
+    claude-code) target="$HOME/.claude/skills/elx-level" ;;
+    cursor) target="$HOME/.cursor/skills/elx-level" ;;
   esac
 fi
 
 case "$target" in
-  */project-level-workflow) ;;
+  */elx-level) ;;
   *) echo "错误：拒绝操作非托管目标：$target" >&2; exit 1 ;;
 esac
 
 independent_pvs="$(dirname -- "$target")/project-vibe-spec"
 if [[ -e "$independent_pvs" ]]; then
   echo "提示：检测到独立 project-vibe-spec：$independent_pvs；本安装不处理该目录。"
+fi
+
+legacy_target="$(dirname -- "$target")/project-level-workflow"
+if [[ -e "$legacy_target" ]]; then
+  echo "提示：检测到旧 Skill：$legacy_target；将保留且不会覆盖。"
 fi
 
 installed_version_file="$target/VERSION"
@@ -82,7 +87,7 @@ if [[ -e "$target" ]]; then
   installed_version="unknown"
   [[ -f "$installed_version_file" ]] && installed_version="$(tr -d '\r\n' < "$installed_version_file")"
   if [[ "$mode" == "install" && "$installed_version" == "$version" ]]; then
-    echo "project-level-workflow $version 已安装：$target"
+    echo "elx-level $version 已安装：$target"
     exit 0
   fi
   backup="$target.backup-$(date +%Y%m%d-%H%M%S)"
@@ -121,5 +126,5 @@ done
 mv -- "$staging" "$target"
 trap - EXIT
 
-echo "完成：project-level-workflow $version 已安装到 $target"
+echo "完成：elx-level $version 已安装到 $target"
 [[ -z "$backup" ]] || echo "原版本已保留在：$backup"

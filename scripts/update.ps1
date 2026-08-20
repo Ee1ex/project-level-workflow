@@ -16,7 +16,7 @@ $ErrorActionPreference = 'Stop'
 
 $installer = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot 'install.ps1'))
 if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {
-    throw "错误：找不到 project-level-workflow 安装器。"
+    throw "错误：找不到 elx-level 安装器；旧 project-level-workflow 安装不会被覆盖。"
 }
 $packageRoot = [System.IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $workflow = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot 'workflow.py'))
@@ -35,8 +35,9 @@ if ($LASTEXITCODE -ne 0) {
 
 if ($Scope -eq 'project') {
     $resolvedProject = [System.IO.Path]::GetFullPath($ProjectPath)
-    $statePath = Join-Path $resolvedProject '.project-workflow/state.json'
-    if (Test-Path -LiteralPath $statePath -PathType Leaf) {
+    $statePath = Join-Path $resolvedProject '.elx-level/state.json'
+    $legacyStatePath = Join-Path $resolvedProject '.project-workflow/state.json'
+    if ((Test-Path -LiteralPath $statePath -PathType Leaf) -or (Test-Path -LiteralPath $legacyStatePath -PathType Leaf)) {
         if ($DryRun) {
             Write-Host "DryRun：将对项目状态执行 migrate：$resolvedProject"
         } else {

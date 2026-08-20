@@ -39,6 +39,23 @@ class PackageValidationTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("包验证通过", result.stdout)
 
+    def test_package_validation_reports_elx_level(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts" / "workflow.py"),
+                "validate-package",
+                "--package-root",
+                str(ROOT),
+            ],
+            text=True,
+            encoding="utf-8",
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("包验证通过：elx-level 2.0", result.stdout)
+
     def test_version_is_consistent_across_public_contracts(self) -> None:
         version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
         schema = json.loads(
@@ -110,11 +127,11 @@ class PackageValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             package = Path(directory) / "package"
             shutil.copytree(ROOT, package)
-            readiness = package / "docs" / "release" / "1.0-readiness.md"
+            readiness = package / "docs" / "release" / "2.0-readiness.md"
             if readiness.exists():
                 readiness.unlink()
             errors = workflow.validate_package(package)
-        self.assertIn("1.0-readiness.md", " ".join(errors))
+        self.assertIn("2.0-readiness.md", " ".join(errors))
 
 
 if __name__ == "__main__":

@@ -1,11 +1,11 @@
-<!-- project-level-workflow:start -->
-## Project Level Workflow 托管入口
+<!-- elx-level:start -->
+## ELX Level 托管入口
 
 - 当前流程：LEVEL {{LEVEL}}
 - 权威等级流程：`{{LEVEL_DOC}}`
 - 当前分层策略：{{LEVEL_MODE}}
-- 机器状态：`.project-workflow/state.json`
-- 人类摘要：`docs/project-workflow/STATUS.md`
+- 机器状态：`.elx-level/state.json`
+- 人类摘要：`docs/elx-level/STATUS.md`
 - 状态校验：`python scripts/workflow.py validate --project .`
 - PVS 分层路由：`references/project-vibe-spec-bridge.md`
 - PVS 包内内核：`core/project-vibe-spec/PVS.md`
@@ -13,4 +13,4 @@
 - 外部能力边界：LEVEL 4 专业能力只路由、不内嵌，安装仍需确认
 
 恢复会话时先校验状态。按 `LEVEL.md` 对应章节和当前执行策略推进，保留用户已有修改；到人工 Gate 后报告事实、证据、方案和推荐决策。LEVEL 4 先分析，负责人确认后可实施并路由外部能力。
-<!-- project-level-workflow:end -->
+<!-- elx-level:end -->

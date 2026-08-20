@@ -1,12 +1,12 @@
 ---
-name: project-level-workflow
+name: elx-level
 description: 当用户要开发个人项目、持续运营产品、改进已有或开源仓库、分析复杂自动化需求、判断 LEVEL，或按可恢复流程推进到交付时使用。支持 LEVEL 1–4、双层项目记忆、低重复审批和外部能力路由。
 compatibility: Codex、Claude Code、Cursor；核心脚本需要 Python 3.10+，安装器支持 PowerShell 或 POSIX Shell。
 ---
 
-# Project Level Workflow
+# ELX Level
 
-把项目推进变成可恢复、可验证、个人开发优先的流程。LEVEL 表示责任模式；LEVEL 1–3 对用户只展示 `AUTO`、`CONFIRM`、`MANUAL_ONLY`，R1–R4 仅作为兼容状态和内部依据。
+ELX Level 把项目推进变成可恢复、可验证、个人开发优先的流程。LEVEL 表示责任模式；LEVEL 1–3 对用户只展示 `AUTO`、`CONFIRM`、`MANUAL_ONLY`，R1–R4 仅作为兼容状态和内部依据。
 
 ## 触发检查
 
@@ -32,8 +32,8 @@ compatibility: Codex、Claude Code、Cursor；核心脚本需要 Python 3.10+，
 
 1. 确定项目根目录，不对不明确的路径执行写操作。
 2. 从根目录向上读取适用的 `AGENTS.md`、`CLAUDE.md`、`.cursor/rules/`、`CONTRIBUTING.md`、README 和项目文档。
-3. 检查 `.project-workflow/state.json`；存在时先运行 `python scripts/workflow.py validate --project <项目根目录>`。
-4. 验证通过后读取 `docs/project-workflow/STATUS.md` 和当前任务；状态与聊天、代码或项目规则冲突时展示差异并询问。
+3. 检查 `.elx-level/state.json`；存在时先运行 `python scripts/workflow.py validate --project <项目根目录>`。只有旧 `.project-workflow` 时提示运行 `migrate`，不得隐式复制。
+4. 验证通过后读取 `docs/elx-level/STATUS.md` 和当前任务；状态与聊天、代码或项目规则冲突时展示差异并询问。
 5. 状态不存在时进入 LEVEL 推荐，不直接创建大量文档或修改实现。
 
 状态协议见 `references/state-protocol.md`；双层文档见 `references/documentation-contract.md`；个人连续执行见 `references/personal-execution-loop.md`；PVS 分层见 `references/project-vibe-spec-bridge.md`；LEVEL 4 能力路由见 `references/level4-capability-routing.md`；GitHub 交付见 `references/github-plugin-routing.md`；通用工具路由见 `references/tool-routing.md`。
@@ -67,7 +67,7 @@ compatibility: Codex、Claude Code、Cursor；核心脚本需要 Python 3.10+，
 python scripts/workflow.py init --project <项目根目录> --level <1|2|3|4>
 ```
 
-`init` 只写入 `.project-workflow/state.json`、`state.backup.json` 和 `docs/project-workflow/STATUS.md`，不未经确认生成大量项目文档。
+`init` 只写入 `.elx-level/state.json`、`state.backup.json` 和 `docs/elx-level/STATUS.md`，不未经确认生成大量项目文档。
 
 - LEVEL 1：规则、文档地图、Project Brief、架构、Requirements/Decisions/Progress Ledger、轻量 Change Record、状态和待验证记录。
 - LEVEL 2：完整 PVS 的 AGENTS、DOCUMENT_MAP、PDD/PRD、Requirements、Decisions、Progress、业务流、UI、架构、API、数据、权限、部署、监控、备份、回滚、运营、Bug 和版本记录。
@@ -111,7 +111,7 @@ python scripts/workflow.py init --project <项目根目录> --level <1|2|3|4>
 
 ## 状态迁移
 
-`0.4.0` 状态迁移到 `1.0` 时 LEVEL 1–4 保持不变；LEVEL 4 保持分析阶段并进入 `level4-execution-review`。更老 Schema 的历史数字映射继续兼容。迁移前写 `state.backup.json` 并记录旧/新版本、等级和原因。
+`migrate` 可把旧 `.project-workflow` 一次性复制到 `.elx-level`，旧目录保持不变；新旧目录并存时停止且不覆盖。`0.4.0` 状态迁移到 `2.0` 时 LEVEL 1–4 保持不变；LEVEL 4 保持分析阶段并进入 `level4-execution-review`。更老 Schema 的历史数字映射继续兼容。迁移前写 `state.backup.json` 并记录旧/新版本、等级和原因。
 
 ## 连续执行与人工 Gate
 

@@ -49,6 +49,12 @@ class DoctorTests(unittest.TestCase):
         self.assertIn("PVS 包内内核", result.stdout)
         self.assertIn("PVS 模板职责映射", result.stdout)
 
+    def test_doctor_requires_elx_level_cursor_adapter(self):
+        self.assertTrue((ROOT / "adapters" / "cursor" / "elx-level.mdc").is_file())
+        self.assertFalse(
+            (ROOT / "adapters" / "cursor" / "project-level-workflow.mdc").exists()
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
