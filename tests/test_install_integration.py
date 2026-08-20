@@ -37,7 +37,7 @@ class InstallIntegrationTests(unittest.TestCase):
                 },
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            installed = skills / "project-level-workflow"
+            installed = skills / "elx-level"
             skill_files = sorted(path.relative_to(installed).as_posix() for path in installed.rglob("SKILL.md"))
             self.assertEqual(skill_files, ["SKILL.md"])
             self.assertTrue((installed / "core" / "project-vibe-spec" / "PVS.md").is_file())
@@ -56,7 +56,8 @@ class InstallIntegrationTests(unittest.TestCase):
                 "templates/level1/project-brief.md",
             ):
                 self.assertTrue((installed / relative).is_file(), relative)
-            self.assertEqual((installed / "VERSION").read_text(encoding="utf-8").strip(), "1.0")
+            self.assertEqual((installed / "VERSION").read_text(encoding="utf-8").strip(), "2.0")
+            self.assertFalse((skills / "project-level-workflow").exists())
             self.assertEqual(marker.read_text(encoding="utf-8"), "keep")
             self.assertIn("独立 project-vibe-spec", result.stdout)
 
@@ -64,7 +65,7 @@ class InstallIntegrationTests(unittest.TestCase):
     def test_failed_staged_replacement_restores_previous_install(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
-            installed = project / ".codex" / "skills" / "project-level-workflow"
+            installed = project / ".codex" / "skills" / "elx-level"
             installed.mkdir(parents=True)
             marker = installed / "keep.txt"
             marker.write_text("previous-install", encoding="utf-8")
@@ -102,7 +103,37 @@ try {{
             self.assertEqual(result.returncode, 23, result.stdout + result.stderr)
             self.assertIn("injected staged replacement failure", result.stdout)
             self.assertEqual(marker.read_text(encoding="utf-8"), "previous-install")
-            self.assertFalse(list(installed.parent.glob("project-level-workflow.installing-*")))
+            self.assertFalse(list(installed.parent.glob("elx-level.installing-*")))
+
+    @unittest.skipUnless(os.name == "nt" and shutil.which("powershell"), "PowerShell integration test")
+    def test_install_preserves_legacy_skill_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            skills = project / ".codex" / "skills"
+            legacy = skills / "project-level-workflow"
+            legacy.mkdir(parents=True)
+            marker = legacy / "keep.txt"
+            marker.write_text("legacy", encoding="utf-8")
+            result = subprocess.run(
+                [
+                    "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+                    "-File", str(ROOT / "scripts" / "install.ps1"),
+                    "-Platform", "codex", "-Scope", "project", "-ProjectPath", str(project),
+                ],
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                capture_output=True,
+                check=False,
+                env={
+                    **os.environ,
+                    "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ.get("PATH", ""),
+                },
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(marker.read_text(encoding="utf-8"), "legacy")
+            self.assertTrue((skills / "elx-level" / "SKILL.md").is_file())
+            self.assertIn("旧 Skill", result.stdout)
 
 
 if __name__ == "__main__":

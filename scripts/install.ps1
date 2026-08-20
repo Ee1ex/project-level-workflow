@@ -32,9 +32,9 @@ function Resolve-InstallTarget {
         }
         $base = [System.IO.Path]::GetFullPath((Resolve-Path -LiteralPath $SelectedProject).Path)
         $relative = switch ($SelectedPlatform) {
-            'codex' { '.codex/skills/project-level-workflow' }
-            'claude-code' { '.claude/skills/project-level-workflow' }
-            'cursor' { '.cursor/skills/project-level-workflow' }
+            'codex' { '.codex/skills/elx-level' }
+            'claude-code' { '.claude/skills/elx-level' }
+            'cursor' { '.cursor/skills/elx-level' }
         }
         return [System.IO.Path]::GetFullPath((Join-Path $base $relative))
     }
@@ -47,10 +47,10 @@ function Resolve-InstallTarget {
             } else {
                 [System.IO.Path]::GetFullPath($env:CODEX_HOME)
             }
-            [System.IO.Path]::GetFullPath((Join-Path $codexRoot 'skills/project-level-workflow'))
+            [System.IO.Path]::GetFullPath((Join-Path $codexRoot 'skills/elx-level'))
         }
-        'claude-code' { [System.IO.Path]::GetFullPath((Join-Path $userRoot '.claude/skills/project-level-workflow')) }
-        'cursor' { [System.IO.Path]::GetFullPath((Join-Path $userRoot '.cursor/skills/project-level-workflow')) }
+        'claude-code' { [System.IO.Path]::GetFullPath((Join-Path $userRoot '.claude/skills/elx-level')) }
+        'cursor' { [System.IO.Path]::GetFullPath((Join-Path $userRoot '.cursor/skills/elx-level')) }
     }
     return $resolved
 }
@@ -59,7 +59,7 @@ function Assert-SafeTarget {
     param([string]$TargetPath)
 
     $leaf = Split-Path -Leaf $TargetPath
-    if ($leaf -ne 'project-level-workflow') {
+    if ($leaf -ne 'elx-level') {
         throw "错误：拒绝操作非托管目标：$TargetPath"
     }
     $root = [System.IO.Path]::GetPathRoot($TargetPath)
@@ -87,7 +87,7 @@ function Copy-Package {
 $packageRoot = [System.IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $versionPath = Join-Path $packageRoot 'VERSION'
 if (-not (Test-Path -LiteralPath $versionPath -PathType Leaf)) {
-    throw "错误：找不到 VERSION，当前目录不是完整的 project-level-workflow 包。"
+    throw "错误：找不到 VERSION，当前目录不是完整的 elx-level 包。"
 }
 $version = (Get-Content -LiteralPath $versionPath -Raw -Encoding UTF8).Trim()
 $workflow = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot 'workflow.py'))
@@ -100,7 +100,7 @@ if (-not $pythonCommand -or -not (Test-Path -LiteralPath $workflow -PathType Lea
 }
 & $pythonCommand.Source $workflow validate-package --package-root $packageRoot
 if ($LASTEXITCODE -ne 0) {
-    throw "错误：project-level-workflow 包校验未通过，已停止安装。"
+    throw "错误：elx-level 包校验未通过，已停止安装。"
 }
 
 $pvsRoot = Join-Path $packageRoot 'core/project-vibe-spec'
@@ -108,6 +108,10 @@ $pvsFiles = @(Get-ChildItem -LiteralPath $pvsRoot -Recurse -File)
 Write-Host "PVS 内核：$($pvsFiles.Count) 个文件"
 $target = Resolve-InstallTarget -SelectedPlatform $Platform -SelectedScope $Scope -SelectedProject $ProjectPath
 Assert-SafeTarget -TargetPath $target
+$legacyTarget = Join-Path (Split-Path -Parent $target) 'project-level-workflow'
+if (Test-Path -LiteralPath $legacyTarget) {
+    Write-Host "提示：检测到旧 Skill：$legacyTarget；将保留且不会覆盖。"
+}
 $independentPvs = Join-Path (Split-Path -Parent $target) 'project-vibe-spec'
 if (Test-Path -LiteralPath $independentPvs) {
     Write-Host "提示：检测到独立 project-vibe-spec：$independentPvs；本安装不处理该目录。"
@@ -126,7 +130,7 @@ if (Test-Path -LiteralPath $target) {
         'unknown'
     }
     if ($Mode -eq 'install' -and $installedVersion -eq $version) {
-        Write-Host "project-level-workflow $version 已安装：$target"
+        Write-Host "elx-level $version 已安装：$target"
         exit 0
     }
     $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
@@ -160,7 +164,7 @@ try {
     }
     Move-Item -LiteralPath $staging -Destination $target
 } catch {
-    if ((Test-Path -LiteralPath $staging) -and (Split-Path -Leaf $staging) -eq "project-level-workflow.installing-$PID") {
+    if ((Test-Path -LiteralPath $staging) -and (Split-Path -Leaf $staging) -eq "elx-level.installing-$PID") {
         Remove-Item -LiteralPath $staging -Recurse -Force
     }
     if ((-not (Test-Path -LiteralPath $target)) -and $backup -and (Test-Path -LiteralPath $backup)) {
@@ -169,7 +173,7 @@ try {
     throw
 }
 
-Write-Host "完成：project-level-workflow $version 已安装到 $target"
+Write-Host "完成：elx-level $version 已安装到 $target"
 if ($backup) {
     Write-Host "原版本已保留在：$backup"
 }

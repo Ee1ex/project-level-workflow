@@ -5,7 +5,7 @@ set -euo pipefail
 
 script_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
 installer="$script_dir/install.sh"
-target="project-level-workflow"
+target="elx-level（旧 project-level-workflow 将保留）"
 [[ -f "$installer" ]] || { printf '错误：找不到 %s 安装器。\n' "$target" >&2; exit 1; }
 package_root="$(CDPATH= cd -- "$script_dir/.." && pwd -P)"
 workflow="$script_dir/workflow.py"
@@ -35,7 +35,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 "$python_cmd" "$workflow" doctor --package-root "$package_root"
-if [[ "$scope" == "project" && -f "$project_path/.project-workflow/state.json" ]]; then
+if [[ "$scope" == "project" && ( -f "$project_path/.elx-level/state.json" || -f "$project_path/.project-workflow/state.json" ) ]]; then
   if [[ "$dry_run" == "true" ]]; then
     echo "DryRun：将对项目状态执行 migrate：$project_path"
   else

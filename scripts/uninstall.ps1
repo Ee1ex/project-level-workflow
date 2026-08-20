@@ -19,9 +19,9 @@ function Resolve-UninstallTarget {
         }
         $base = [System.IO.Path]::GetFullPath((Resolve-Path -LiteralPath $ProjectPath).Path)
         $relative = switch ($Platform) {
-            'codex' { '.codex/skills/project-level-workflow' }
-            'claude-code' { '.claude/skills/project-level-workflow' }
-            'cursor' { '.cursor/skills/project-level-workflow' }
+            'codex' { '.codex/skills/elx-level' }
+            'claude-code' { '.claude/skills/elx-level' }
+            'cursor' { '.cursor/skills/elx-level' }
         }
         return [System.IO.Path]::GetFullPath((Join-Path $base $relative))
     }
@@ -30,24 +30,25 @@ function Resolve-UninstallTarget {
     $resolved = switch ($Platform) {
         'codex' {
             $codexRoot = if ([string]::IsNullOrWhiteSpace($env:CODEX_HOME)) { Join-Path $userRoot '.codex' } else { [System.IO.Path]::GetFullPath($env:CODEX_HOME) }
-            [System.IO.Path]::GetFullPath((Join-Path $codexRoot 'skills/project-level-workflow'))
+            [System.IO.Path]::GetFullPath((Join-Path $codexRoot 'skills/elx-level'))
         }
-        'claude-code' { [System.IO.Path]::GetFullPath((Join-Path $userRoot '.claude/skills/project-level-workflow')) }
-        'cursor' { [System.IO.Path]::GetFullPath((Join-Path $userRoot '.cursor/skills/project-level-workflow')) }
+        'claude-code' { [System.IO.Path]::GetFullPath((Join-Path $userRoot '.claude/skills/elx-level')) }
+        'cursor' { [System.IO.Path]::GetFullPath((Join-Path $userRoot '.cursor/skills/elx-level')) }
     }
     return $resolved
 }
 
 $target = Resolve-UninstallTarget
-if ((Split-Path -Leaf $target) -ne 'project-level-workflow') {
+if ((Split-Path -Leaf $target) -ne 'elx-level') {
     throw "错误：拒绝删除非托管路径：$target"
 }
 
-Write-Host "将卸载 project-level-workflow：$target"
+Write-Host "将卸载 elx-level：$target"
 Write-Host '托管目录包含统一 LEVEL.md；只删除该托管目录。'
-Write-Host '托管目录中的 PVS 包内内核将随 project-level-workflow 一起移除。'
+Write-Host '托管目录中的 PVS 包内内核将随 elx-level 一起移除。'
 Write-Host '独立 project-vibe-spec 不属于本包托管范围，本卸载器不处理。'
-Write-Host '项目状态 .project-workflow 与 docs/project-workflow 将保留。'
+Write-Host '新状态 .elx-level 与 docs/elx-level 将保留；旧状态 .project-workflow 也将保留。'
+Write-Host '旧 Skill project-level-workflow 不在本次卸载范围。'
 if (-not (Test-Path -LiteralPath $target)) {
     Write-Host '未发现安装目录，无需处理。'
     exit 0
