@@ -46,8 +46,8 @@ REQUIRED_FIELDS = (
     "updated_at",
 )
 SENSITIVE_KEY_PARTS = ("password", "secret", "token", "api_key", "private_key")
-MANAGED_START = "<!-- project-level-workflow:start -->"
-MANAGED_END = "<!-- project-level-workflow:end -->"
+MANAGED_START = "<!-- elx-level:start -->"
+MANAGED_END = "<!-- elx-level:end -->"
 LEVEL_DOCUMENT = "LEVEL.md"
 PVS_CORE = Path("core/project-vibe-spec")
 PVS_TEMPLATE_MAP = Path("templates/template-map.json")
@@ -723,7 +723,7 @@ def command_doctor(args: argparse.Namespace) -> int:
         "references/github-plugin-routing.md",
         "adapters/codex/AGENTS.fragment.md",
         "adapters/claude-code/CLAUDE.fragment.md",
-        "adapters/cursor/project-level-workflow.mdc",
+        "adapters/cursor/elx-level.mdc",
     ]:
         path = root / relative
         checks.append((relative, path.is_file(), str(path)))
@@ -806,7 +806,7 @@ def _merge_managed_content(existing: str, rendered: str) -> str:
 
 def _write_with_backup(path: Path, content: str) -> None:
     if path.exists():
-        backup = path.with_name(f"{path.name}.project-level-workflow.bak")
+        backup = path.with_name(f"{path.name}.elx-level.bak")
         atomic_write_text(backup, path.read_text(encoding="utf-8"))
     atomic_write_text(path, content)
 
@@ -834,8 +834,8 @@ def command_render_adapter(args: argparse.Namespace) -> int:
             project / "CLAUDE.md",
         ),
         "cursor": (
-            PACKAGE_ROOT / "adapters" / "cursor" / "project-level-workflow.mdc",
-            project / ".cursor" / "rules" / "project-level-workflow.mdc",
+            PACKAGE_ROOT / "adapters" / "cursor" / "elx-level.mdc",
+            project / ".cursor" / "rules" / "elx-level.mdc",
         ),
     }
     template_path, target_path = definitions[args.platform]
@@ -1223,7 +1223,7 @@ def validate_package(root: Path) -> list[str]:
         "references/github-plugin-routing.md",
         "adapters/codex/AGENTS.fragment.md",
         "adapters/claude-code/CLAUDE.fragment.md",
-        "adapters/cursor/project-level-workflow.mdc",
+        "adapters/cursor/elx-level.mdc",
         "scripts/install.ps1",
         "scripts/install.sh",
         "scripts/update.ps1",
@@ -1304,7 +1304,7 @@ def validate_package(root: Path) -> list[str]:
     for relative in (
         "adapters/codex/AGENTS.fragment.md",
         "adapters/claude-code/CLAUDE.fragment.md",
-        "adapters/cursor/project-level-workflow.mdc",
+        "adapters/cursor/elx-level.mdc",
     ):
         adapter = (root / relative).read_text(encoding="utf-8")
         if (

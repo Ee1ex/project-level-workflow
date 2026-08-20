@@ -115,6 +115,10 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertIn("name: elx-level", skill)
         self.assertIn("ELX Level", skill)
         self.assertNotIn("name: project-level-workflow", skill)
+        self.assertTrue((ROOT / "adapters" / "cursor" / "elx-level.mdc").is_file())
+        self.assertFalse(
+            (ROOT / "adapters" / "cursor" / "project-level-workflow.mdc").exists()
+        )
 
     def test_public_text_has_no_private_absolute_paths(self):
         public_files = list(ROOT.glob("*.md")) + list(ROOT.glob("references/*.md"))
