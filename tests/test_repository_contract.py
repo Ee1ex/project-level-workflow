@@ -107,7 +107,14 @@ class RepositoryContractTests(unittest.TestCase):
     def test_version_uses_two_numeric_segments(self):
         version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
         self.assertRegex(version, re.compile(r"^\d+\.\d+$"))
-        self.assertEqual(version, "1.0")
+        self.assertEqual(version, "2.0")
+
+    def test_public_identity_is_elx_level_2_0(self):
+        self.assertEqual((ROOT / "VERSION").read_text(encoding="utf-8").strip(), "2.0")
+        skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("name: elx-level", skill)
+        self.assertIn("ELX Level", skill)
+        self.assertNotIn("name: project-level-workflow", skill)
 
     def test_public_text_has_no_private_absolute_paths(self):
         public_files = list(ROOT.glob("*.md")) + list(ROOT.glob("references/*.md"))
@@ -120,7 +127,7 @@ class RepositoryContractTests(unittest.TestCase):
     def test_skill_frontmatter_and_references(self):
         skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
         self.assertTrue(skill.startswith("---\n"))
-        self.assertIn("name: project-level-workflow", skill)
+        self.assertIn("name: elx-level", skill)
         self.assertIn("description:", skill)
         for relative in [
             "references/level-selection.md",

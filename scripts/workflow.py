@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Project Level Workflow 的确定性状态管理 CLI。"""
+"""ELX Level 的确定性状态管理 CLI。"""
 
 from __future__ import annotations
 
@@ -17,6 +17,8 @@ from urllib.parse import unquote
 
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
+PACKAGE_NAME = "elx-level"
+PRODUCT_NAME = "ELX Level"
 SCHEMA_VERSION = "2.0"
 LEGACY_SCHEMA_VERSIONS = {"0.9.0", "1.0.0", "1.1.0"}
 TWO_PART_VERSION = re.compile(r"^\d+\.\d+$")
@@ -1262,12 +1264,12 @@ def command_validate_package(args: argparse.Namespace) -> int:
     if errors:
         print("包验证失败：\n- " + "\n- ".join(errors), file=sys.stderr)
         return 1
-    print(f"包验证通过：project-level-workflow {(root / 'VERSION').read_text(encoding='utf-8').strip()}")
+    print(f"包验证通过：{PACKAGE_NAME} {(root / 'VERSION').read_text(encoding='utf-8').strip()}")
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Project Level Workflow 状态工具")
+    parser = argparse.ArgumentParser(description=f"{PRODUCT_NAME} 状态工具")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     init_parser = subparsers.add_parser("init", help="初始化项目流程状态")

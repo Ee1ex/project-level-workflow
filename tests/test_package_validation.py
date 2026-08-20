@@ -39,6 +39,23 @@ class PackageValidationTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("包验证通过", result.stdout)
 
+    def test_package_validation_reports_elx_level(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts" / "workflow.py"),
+                "validate-package",
+                "--package-root",
+                str(ROOT),
+            ],
+            text=True,
+            encoding="utf-8",
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("包验证通过：elx-level 2.0", result.stdout)
+
     def test_version_is_consistent_across_public_contracts(self) -> None:
         version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
         schema = json.loads(

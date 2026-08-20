@@ -1,12 +1,12 @@
 ---
-name: project-level-workflow
+name: elx-level
 description: 当用户要开发个人项目、持续运营产品、改进已有或开源仓库、分析复杂自动化需求、判断 LEVEL，或按可恢复流程推进到交付时使用。支持 LEVEL 1–4、双层项目记忆、低重复审批和外部能力路由。
 compatibility: Codex、Claude Code、Cursor；核心脚本需要 Python 3.10+，安装器支持 PowerShell 或 POSIX Shell。
 ---
 
-# Project Level Workflow
+# ELX Level
 
-把项目推进变成可恢复、可验证、个人开发优先的流程。LEVEL 表示责任模式；LEVEL 1–3 对用户只展示 `AUTO`、`CONFIRM`、`MANUAL_ONLY`，R1–R4 仅作为兼容状态和内部依据。
+ELX Level 把项目推进变成可恢复、可验证、个人开发优先的流程。LEVEL 表示责任模式；LEVEL 1–3 对用户只展示 `AUTO`、`CONFIRM`、`MANUAL_ONLY`，R1–R4 仅作为兼容状态和内部依据。
 
 ## 触发检查
 

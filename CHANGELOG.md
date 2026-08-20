@@ -2,6 +2,13 @@
 
 本项目的所有重要变化都会记录在此文件中。
 
+## [2.0] - 2026-08-20
+
+- 产品与 Skill 正式更名为 ELX Level / `elx-level`，新安装目录统一使用 `elx-level`。
+- 新项目状态迁移到 `.elx-level` 与 `docs/elx-level`，旧 `.project-workflow` 通过显式命令一次性复制并保留为回滚来源。
+- 不提供长期可发现的旧 Skill 别名；`Project Level Workflow 1.0` 与 `v1.0` 保留为旧品牌最终稳定版本。
+- LEVEL 1–4、`AUTO` / `CONFIRM` / `MANUAL_ONLY`、Schema `2.0` 和 GitHub 远程确认边界保持不变。
+
 ## [1.0] - 2026-08-16
 
 - 公共版本改为两段式 `1.0`，状态 Schema 升级为 `2.0`，并兼容迁移 `0.4.0` 三段版本状态。
